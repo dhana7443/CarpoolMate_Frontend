@@ -6,6 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import tw from 'twrnc';
 
 const RideDetailsScreen = () => {
   const [rideDetails, setRideDetails] = useState(null);
@@ -84,7 +85,7 @@ const RideDetailsScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={tw`flex-1 justify-center items-center bg-gray-100`}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
@@ -92,73 +93,88 @@ const RideDetailsScreen = () => {
 
   if (!rideDetails) {
     return (
-      <View style={styles.centered}>
-        <Text >No active rides at this point or failed to load details</Text>
+      <View style={tw`flex-1 justify-center items-center bg-gray-100`}>
+        <Text style={tw`text-base text-gray-600 text-center px-6`}>
+          No active rides or failed to load details.
+        </Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
-        <Text style={styles.heading}>Ride Details</Text>
-        <View style={styles.rideCard}>
-          <Text style={styles.sectionTitle}>Ride Created</Text>
-          <Text style={styles.detailText}>
-            From: <Text style={styles.bold}>{rideDetails.originStopName}</Text>
-          </Text>
-          <Text style={styles.detailText}>
-            To: <Text style={styles.bold}>{rideDetails.destinationStopName}</Text>
-          </Text>
-          <Text style={styles.detailText}>
-            Departure: {new Date(rideDetails.departure_time).toLocaleString()}
-          </Text>
-          <Text style={styles.detailText}>
-            Available Seats: {rideDetails.available_seats}
-          </Text>
+    <SafeAreaView style={tw`flex-1 bg-gray-100`}>
+    <ScrollView style={tw`px-4 pt-6`}>
+      <Text style={tw`text-xl font-bold text-black mb-4 mt-10`}>Ride Details</Text>
 
-          <TouchableOpacity
-            style={styles.toggleButton}
-            onPress={() => setShowSubroutes(!showSubroutes)}
-          >
-            <Text style={styles.subrouteHeader}>Subroute Details</Text>
-            <Ionicons
-              name={showSubroutes ? 'chevron-up-outline' : 'chevron-down-outline'}
-              size={24}
-              color="#000"
-            />
-          </TouchableOpacity>
+      <View style={tw`bg-white rounded-2xl p-4 border border-gray-200 mb-6`}>
+        <Text style={tw`text-base font-semibold text-black mb-2`}>
+          Ride Created
+        </Text>
 
-          {showSubroutes && (
-            <View>
-              <View style={styles.tableHeader}>
-                <Text style={styles.tableCell}>From</Text>
-                <Text style={styles.tableCell}>To</Text>
-                <Text style={styles.tableCell}>Dist</Text>
-                <Text style={styles.tableCell}>Time</Text>
-                <Text style={styles.tableCell}>Cost</Text>
-              </View>
+        <Text style={tw`text-sm text-gray-700 mb-1`}>
+          From: <Text style={tw`font-medium text-gray-800`}>{rideDetails.originStopName}</Text>
+        </Text>
+        <Text style={tw`text-sm text-gray-700 mb-1`}>
+          To: <Text style={tw`font-medium text-gray-800`}>{rideDetails.destinationStopName}</Text>
+        </Text>
+        <Text style={tw`text-sm text-gray-700 mb-1`}>
+          Departure: {new Date(rideDetails.departure_time).toLocaleString()}
+        </Text>
+        <Text style={tw`text-sm text-gray-700 mb-1`}>
+          Available Seats: {rideDetails.available_seats}
+        </Text>
 
-              {rideDetails.subroutes.map((sr, index) => (
-                <View key={index} style={styles.tableRow}>
-                  <Text style={styles.tableCell}>{sr.from_stop_name}</Text>
-                  <Text style={styles.tableCell}>{sr.to_stop_name}</Text>
-                  <Text style={styles.tableCell}>{sr.distance} m</Text>
-                  <Text style={styles.tableCell}>{sr.time} min</Text>
-                  <Text style={styles.tableCell}>₹{sr.cost}</Text>
-                </View>
-              ))}
+        {/* Toggle Subroutes */}
+        <TouchableOpacity
+          style={tw`flex-row items-center justify-between mt-3`}
+          onPress={() => setShowSubroutes(!showSubroutes)}
+        >
+          <Text style={tw`text-blue-600 font-medium text-sm`}>
+            {showSubroutes ? 'Hide Subroute Details' : 'Show Subroute Details'}
+          </Text>
+          <Ionicons
+            name={showSubroutes ? 'chevron-up-outline' : 'chevron-down-outline'}
+            size={20}
+            style={tw`text-blue-600`}
+          />
+        </TouchableOpacity>
+        
+        {showSubroutes && (
+          <View style={tw`mt-4 rounded-b-xl overflow-hidden`}>
+            <View style={tw`flex-row bg-blue-100 rounded-t-xl px-3 py-2`}>
+              <Text style={tw`flex-1 text-xs font-semibold text-gray-700`}>From</Text>
+              <Text style={tw`flex-1 text-xs font-semibold text-gray-700`}>To</Text>
+              <Text style={tw`w-14 text-xs font-semibold text-gray-700 text-center`}>Dist</Text>
+              <Text style={tw`w-14 text-xs font-semibold text-gray-700 text-center`}>Time</Text>
+              <Text style={tw`w-14 text-xs font-semibold text-gray-700 text-center`}>Cost</Text>
             </View>
-          )}
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: '#d9534f', margin: 15 }]}
-            onPress={handleCancelRide}
-          >
-            <Text style={styles.primaryButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
+
+            {rideDetails.subroutes.map((sr, idx) => (
+              <View
+                key={idx}
+                style={tw`flex-row px-3 py-2 ${idx % 2 === 0 ? 'bg-white' : 'bg-blue-50'} border-t border-blue-100`}
+              >
+                <Text style={tw`flex-1 text-xs text-gray-800`}>{sr.from_stop_name}</Text>
+                <Text style={tw`flex-1 text-xs text-gray-800`}>{sr.to_stop_name}</Text>
+                <Text style={tw`w-14 text-xs text-gray-800 text-center`}>{sr.distance}m</Text>
+                <Text style={tw`w-14 text-xs text-gray-800 text-center`}>{sr.time}m</Text>
+                <Text style={tw`w-14 text-xs text-gray-800 text-center`}>₹{sr.cost}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+
+        {/* Cancel Button */}
+        <TouchableOpacity
+          style={tw`bg-red-600 py-2 px-4 mt-5 rounded-xl`}
+          onPress={handleCancelRide}
+        >
+          <Text style={tw`text-white text-center font-semibold`}>Cancel Ride</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
-    </SafeAreaView>
+  </SafeAreaView>
   );
 };
 

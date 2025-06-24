@@ -6,9 +6,11 @@ import api from '../src/api/axios';
 import tw from 'twrnc';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { useUnread } from './unreadContext';
 
 const RideRequestsScreen = () => {
   const [rideRequests, setRideRequests] = useState(null);
+  const {fetchUnreadCount,setUnreadCount}=useUnread();
 
   useFocusEffect(
     useCallback(() => {
@@ -24,6 +26,14 @@ const RideRequestsScreen = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRideRequests(res.data);
+
+      //mark all ride requests as seen
+
+      await api.put(`ride-requests/ride/${ride_id}/mark-seen`,{
+        headers:{Authorization:`Bearer ${token}`}
+      })
+
+      setUnreadCount(0);
     } catch (err) {
       Toast.show({ type: 'error', text1: 'Error fetching ride requests' });
     }
@@ -65,7 +75,7 @@ const RideRequestsScreen = () => {
       {!rideRequests ? (
         <Text style={tw`text-center text-gray-500`}>Loading...</Text>
       ) : rideRequests.requests.length === 0 ? (
-        <Text style={tw`text-center text-gray-500`}>No ride requests</Text>
+        <Text style={tw`text-center  m-7 text-gray-500`}>No ride requests</Text>
       ) : (
         <View style={styles.card}>
           <Text style={styles.title}>Ride Info</Text>

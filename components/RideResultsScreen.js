@@ -13,10 +13,36 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import tw from 'twrnc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const handleRideBooking = async (rideId, fromStop, toStop) => {
+const handleRideBooking = async (rideId, fromStop, toStop,routeId) => {
   try {
     const token = await AsyncStorage.getItem('userToken');
 
+    // Step 1: Validate ride request
+    const validateRes = await api.post(
+      '/rides/validate-request',
+      {
+        ride_id: rideId,
+        from_stop: fromStop,
+        to_stop: toStop,
+        route_id:routeId
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log(validateRes.data.canBook);
+    if (!validateRes.data?.canBook) {
+      Toast.show({
+        type: 'error',
+        text1: 'Booking Not Allowed',
+        text2: validateRes.data.message || 'Ride is full in selected segment',
+      });
+      return; // Don't proceed
+    }
+
+    // Step 2: Send ride request
     const response = await api.post(
       '/ride-requests/',
       {
@@ -130,7 +156,7 @@ const RideResultsScreen = () => {
             )}
             <TouchableOpacity
               style={tw`bg-blue-600 py-2 px-4 mt-4 rounded-xl`}
-              onPress={() => handleRideBooking(ride.ride_id,from,to)}
+              onPress={() => handleRideBooking(ride.ride_id,from,to,ride.route_id)}
             >
               <Text style={tw`text-white text-center font-semibold`}>Book Ride</Text>
             </TouchableOpacity>
