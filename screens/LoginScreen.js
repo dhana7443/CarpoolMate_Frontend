@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,55 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../src/api/axios';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import messaging from '@react-native-firebase/messaging';
 import { parseJwt } from '../utils/jwt';
+
 
 const LoginScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+
+  //upload token
+  const uploadFcmTokenForCurrentUser = async () => {
+    try {
+      const fcmToken = await messaging().getToken();
+      const authToken = await AsyncStorage.getItem('userToken');
+
+      if (!authToken) {
+        console.log("User not logged in, skipping FCM upload.");
+        return;
+      }
+
+      if (!fcmToken) {
+        console.log("No FCM token retrieved.");
+        return;
+      }
+
+      console.log("Uploading FCM token:", fcmToken);
+
+      await api.post(
+        '/users/store-fcm-token',
+        { fcmToken },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+
+      console.log("FCM token uploaded successfully.");
+    } catch (error) {
+      console.error("Error uploading FCM token:", error);
+    }
+  };
+
+  //handle fcm token refresh automatically
+  useEffect(() => {
+    const unsubscribe = messaging().onTokenRefresh(token => {
+      console.log("FCM token refreshed:", token);
+      uploadFcmTokenForCurrentUser();
+    });
+
+    return unsubscribe;
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -32,6 +75,8 @@ const LoginScreen = () => {
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userInfo', JSON.stringify({ user }));
 
+      //upload token after login
+      await uploadFcmTokenForCurrentUser();
       console.log('Login successful, token and user info stored');
 
       if (user.role === 'driver') {
@@ -118,26 +163,28 @@ const BORDER_DEFAULT = '#D1D5DB';
 const DARK_TEXT = '#E2E8F0';
 const MUTED_TEXT = '#CBD5E1';
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: SCREEN_BG,
   },
   content: {
-    padding: 24,
+    padding: 30,
     justifyContent: 'center',
   },
   logo: {
-    width: 64,
-    height: 64,
+    marginTop:30,
+    width: 72,
+    height: 72,
     alignSelf: 'center',
     marginBottom: -10,
   },
   appName: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     alignSelf: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   appNameBlue: {
     color: '#3B82F6',
@@ -146,41 +193,41 @@ const styles = StyleSheet.create({
     color: '#38BDF8',
   },
   heading: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: DARK_TEXT,
     textAlign: 'left',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   subheading: {
-    fontSize: 16,
+    fontSize: 15,
     color: MUTED_TEXT,
     textAlign: 'left',
-    marginBottom: 30,
+    marginBottom: 24,
   },
   card: {
     backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 20,
-    borderWidth: 1.5,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
     borderColor: '#334155',
     shadowColor: '#000',
     shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 16,
   },
   input: {
-    height: 50,
+    height: 48,
     backgroundColor: INPUT_BG,
     borderColor: BORDER_DEFAULT,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 15,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    fontSize: 14,
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   ctaButton: {
     backgroundColor: PRIMARY,
@@ -189,13 +236,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 50,
-    marginTop: 10,
+    marginTop: 12,
   },
   ctaText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    marginRight: 8,
+    marginRight: 6,
   },
   ctaIcon: {
     marginTop: 1,
@@ -204,12 +251,13 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 14,
   },
   signupText: {
     fontSize: 15,
     textAlign: 'center',
     color: '#fff',
+    marginTop: 10,
   },
   signupLink: {
     color: '#9c27b0',

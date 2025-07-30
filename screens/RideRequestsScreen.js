@@ -21,6 +21,11 @@ const RideRequestsScreen = () => {
   const fetchRideRequests = async () => {
     try {
       const ride_id = await AsyncStorage.getItem("ride_id");
+      if (!ride_id){
+        // If no active ride, clear the requests state
+      setRideRequests([]);
+      return; //prevents api call
+      }
       const token = await AsyncStorage.getItem("userToken");
       const res = await api.get(`/ride-requests/ride/${ride_id}/requests`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -66,6 +71,8 @@ const RideRequestsScreen = () => {
       case 'Pending': return styles.pendingStatus;
       case 'Accepted': return styles.acceptedStatus;
       case 'Rejected': return styles.rejectedStatus;
+      case 'Cancelled': return styles.cancelledStatus;
+      case 'CompletedByRider': return styles.completedStatus;
       default: return {};
     }
   };
@@ -74,13 +81,13 @@ const RideRequestsScreen = () => {
     <ScrollView style={tw`bg-white p-4`}>
       {!rideRequests ? (
         <Text style={tw`text-center text-gray-500`}>Loading...</Text>
-      ) : rideRequests.requests.length === 0 ? (
+      ) : !rideRequests?.requests || rideRequests.requests.length === 0 ? (
         <Text style={tw`text-center  m-7 text-gray-500`}>No ride requests</Text>
       ) : (
         <View style={styles.card}>
           <Text style={styles.title}>Ride Info</Text>
           <Text style={styles.header}>
-            {rideRequests.origin} ➜ {rideRequests.destination}
+            {rideRequests.origin} to {rideRequests.destination}
           </Text>
           <Text style={styles.info}>Departure: {new Date(rideRequests.departure_time).toLocaleString()}</Text>
           <Text style={styles.info}>Available Seats: {rideRequests.available_seats}</Text>
@@ -92,7 +99,8 @@ const RideRequestsScreen = () => {
               <View style={tw`flex-row justify-between items-center`}>
                 <Text style={styles.name}>{req.rider.name}</Text>
                 <Text style={[styles.status, getStatusStyle(req.status)]}>
-                  {req.status}
+
+                  {req.status === 'CompletedByRider' ? 'Completed' : req.status}
                 </Text>
               </View>
               <Text style={styles.email}>{req.rider.email}</Text>
@@ -170,8 +178,9 @@ const styles = StyleSheet.create({
   },
   name: {
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: 14,
     color: '#000',
+    marginRight:5
   },
   email: {
     color: '#666',
@@ -197,6 +206,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#dc3545',
     color: '#fff',
   },
+  cancelledStatus: {
+  backgroundColor: '#94a', 
+  //backgroundColor:'#14b8a6'
+  color: '#fff',
+  },
+  completedStatus:{
+    backgroundColor:'#a855f7',
+    color:'#fff'
+  },
+
   actionBtn: {
     flex: 1,
     padding: 10,

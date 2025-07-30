@@ -17,8 +17,3 @@ export const parseJwt = (token) =>{
   }
 };
 
-// const decoded = parseJwt(token);
-//       if (!decoded){
-//         Alert.alert('Login failed','invalid token received');
-//       }
-//       const { role_name, user_id } = decoded;

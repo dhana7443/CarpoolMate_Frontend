@@ -20,7 +20,10 @@ const RideDetailsScreen = () => {
       const token = await AsyncStorage.getItem('userToken');
       console.log(token);
       if (!ride_id || !token) {
-        throw new Error('Ride ID or token not found.');
+        console.log('No active ride or missing token, skipping fetch.');
+        setRideDetails(null);
+        setLoading(false);
+        return;
       }
 
       const response = await api.get(`/rides/ride/${ride_id}`, {
@@ -85,7 +88,7 @@ const RideDetailsScreen = () => {
 
   if (loading) {
     return (
-      <View style={tw`flex-1 justify-center items-center bg-gray-100`}>
+      <View style={tw`flex-1 justify-center items-center bg-gray-100 m-3`}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
@@ -93,7 +96,7 @@ const RideDetailsScreen = () => {
 
   if (!rideDetails) {
     return (
-      <View style={tw`flex-1 justify-center items-center bg-gray-100`}>
+      <View style={tw`flex-1 justify-start items-center bg-gray-100 p-10`}>
         <Text style={tw`text-base text-gray-600 text-center px-6`}>
           No active rides or failed to load details.
         </Text>

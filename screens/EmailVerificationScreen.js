@@ -97,9 +97,10 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     justifyContent: 'center',
+    marginTop:30,
   },
   heading: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: DARK_TEXT,
     textAlign: 'left',
