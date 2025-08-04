@@ -22,18 +22,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
   };
 
   return (
-    // <View style={styles.container}>
-    //   <Text>Email:</Text>
-    //   <TextInput
-    //     value={email}
-    //     onChangeText={setEmail}
-    //     placeholder="Enter your email"
-    //     keyboardType="email-address"
-    //     autoCapitalize="none"
-    //     style={{ borderWidth: 1, padding: 10, marginVertical: 10 }}
-    //   />
-    //   <Button title="Send OTP" onPress={handleSendOtp} />
-    // </View>
+    
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Forgot Password</Text>
@@ -52,7 +41,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleSendOtp}>
             <Text style={styles.ctaText}>Send OTP</Text>
-            <Icon name="mail-outline" size={22} color="#fff" style={styles.ctaIcon} />
+            {/* <Icon name="mail-outline" size={22} color="#fff" style={styles.ctaIcon} /> */}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -62,7 +51,8 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
 export default ForgotPasswordScreen;
 
-const PRIMARY = '#5A67D8';
+// const PRIMARY = '#5A67D8';
+const PRIMARY='#1e40af';
 const SCREEN_BG = '#0F172A';
 const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';
@@ -80,14 +70,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heading: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: DARK_TEXT,
     textAlign: 'left',
     marginBottom: 6,
   },
   subheading: {
-    fontSize: 16,
+    fontSize: 14,
     color: MUTED_TEXT,
     textAlign: 'left',
     marginBottom: 30,

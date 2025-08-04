@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, TextInput,TouchableOpacity, Button, Text, Alert,StyleSheet,SafeAreaView,ScrollView } from 'react-native';
 import api from '../src/api/axios';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -7,6 +7,19 @@ import Icon from 'react-native-vector-icons/Ionicons';
 const VerifyOtpScreen = ({ route, navigation }) => {
   const { email } = route.params;
   const [otp, setOtp] = useState('');
+  const [timer, setTimer] = useState(120);
+
+  const RESEND_INTERVAL=120;
+
+  useEffect(() => {
+      let countdown;
+      if (timer > 0) {
+        countdown = setInterval(() => {
+          setTimer((prev) => prev - 1);
+        }, 1000);
+      }
+      return () => clearInterval(countdown);
+    }, [timer]);
 
   const handleVerify = async () => {
     if (!otp) {
@@ -22,20 +35,30 @@ const VerifyOtpScreen = ({ route, navigation }) => {
     } catch (err) {
       Alert.alert('Error', err.response?.data?.message || err.message);
     }
+
   };
 
+  const handleResendOtp = async () => {
+    if (!email) {
+      Alert.alert('Missing Email', 'Please enter your email to resend OTP.');
+      return;
+    }
+
+    try {
+      await api.post('/users/resend-password-otp', { email });
+      Alert.alert('OTP Sent', 'A new OTP has been sent to your email.');
+      setTimer(RESEND_INTERVAL);
+    } catch (error) {
+      
+      let message = error.response?.data?.message || error.message;
+      console.log("error message:",message);
+      Alert.alert('Error', message);
+    }
+  };
+
+
   return (
-    // <View style={{ padding: 20 }}>
-    //   <Text>OTP:</Text>
-    //   <TextInput
-    //     value={otp}
-    //     onChangeText={setOtp}
-    //     placeholder="Enter OTP"
-    //     keyboardType="numeric"
-    //     style={{ borderWidth: 1, padding: 10, marginVertical: 10 }}
-    //   />
-    //   <Button title="Verify OTP" onPress={handleVerify} />
-    // </View>
+    
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Verify OTP</Text>
@@ -53,8 +76,22 @@ const VerifyOtpScreen = ({ route, navigation }) => {
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleVerify}>
             <Text style={styles.ctaText}>Verify OTP</Text>
-            <Icon name="checkmark-circle-outline" size={22} color="#fff" style={styles.ctaIcon} />
+            {/* <Icon name="checkmark-circle-outline" size={22} color="#fff" style={styles.ctaIcon} /> */}
           </TouchableOpacity>
+
+          {/* Resend OTP Section */}
+           <View style={styles.resendContainer}>
+              {timer > 0 ? (
+                <Text style={styles.timerText}>
+                  Resend OTP in {timer} seconds
+                </Text>
+                ) : (
+                  <TouchableOpacity onPress={handleResendOtp}>
+                    <Text style={styles.resendText}>Resend OTP</Text>
+                  </TouchableOpacity>    
+                )}    
+            </View>                       
+
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -63,7 +100,7 @@ const VerifyOtpScreen = ({ route, navigation }) => {
 
 export default VerifyOtpScreen;
 
-const PRIMARY = '#5A67D8';
+const PRIMARY = '#1e40af';
 const SCREEN_BG = '#0F172A';
 const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';
@@ -81,14 +118,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heading: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: DARK_TEXT,
     textAlign: 'left',
     marginBottom: 6,
   },
   subheading: {
-    fontSize: 16,
+    fontSize: 14,
     color: MUTED_TEXT,
     textAlign: 'left',
     marginBottom: 30,
@@ -113,7 +150,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
-    fontSize: 15,
+    fontSize: 14,
     color: '#1F2937',
     marginBottom: 16,
   },
@@ -134,5 +171,18 @@ const styles = StyleSheet.create({
   },
   ctaIcon: {
     marginTop: 1,
+  },
+  resendContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  timerText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  resendText: {
+    color: PRIMARY,
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

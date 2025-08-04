@@ -241,19 +241,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
   Alert,
-  KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const SignupScreen = () => {
   const navigation = useNavigation();
+
   const [isRider, setIsRider] = useState(true);
   const [focusedInput, setFocusedInput] = useState(null);
 
@@ -286,7 +284,6 @@ const SignupScreen = () => {
 
   const validateField = (field, value) => {
     let error = '';
-
     if (!value) {
       error = 'This field is required';
     } else {
@@ -374,130 +371,126 @@ const SignupScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+      {/* Fixed Header */}
+      <View style={styles.fixedHeader}>
+        <Text style={styles.heading}>{isRider ? 'Register as a Rider' : 'Register as a Driver'}</Text>
+        <Text style={styles.subheading}>Create a new account to get started</Text>
+        <View style={styles.switchWrapper}>
+          <TouchableOpacity
+            style={[styles.switchButton, isRider && styles.switchActive]}
+            onPress={() => {
+              setIsRider(true);
+              resetForm();
+            }}
+          >
+            <Text style={[styles.switchText, isRider && styles.switchTextActive]}>Rider</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.switchButton, !isRider && styles.switchActive]}
+            onPress={() => {
+              setIsRider(false);
+              resetForm();
+            }}
+          >
+            <Text style={[styles.switchText, !isRider && styles.switchTextActive]}>Driver</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Scrollable Form */}
+      <KeyboardAwareScrollView
+        enableOnAndroid
+        extraScrollHeight={Platform.OS === 'android' ? 100 : 80}
+        contentContainerStyle={styles.scrollableForm}
+        keyboardShouldPersistTaps="handled"
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          
-            <Text style={styles.heading}>{isRider ? 'Register as a Rider' : 'Register as a Driver'}</Text>
-            <Text style={styles.subheading}>Create a new account to get started</Text>
-
-            <View style={styles.switchWrapper}>
-              <TouchableOpacity
-                style={[styles.switchButton, isRider && styles.switchActive]}
-                onPress={() => {
-                  setIsRider(true);
-                  resetForm();
+        <View style={styles.card}>
+          {['firstName', 'lastName', 'email', 'phone', 'password'].map(field => (
+            <View key={field}>
+              <TextInput
+                style={[styles.input, focusedInput === field && styles.inputFocused]}
+                placeholder={
+                  field === 'firstName'
+                    ? 'First Name'
+                    : field === 'lastName'
+                    ? 'Last Name'
+                    : field === 'email'
+                    ? 'Email'
+                    : field === 'phone'
+                    ? 'Phone Number'
+                    : 'Password'
+                }
+                secureTextEntry={field === 'password'}
+                keyboardType={
+                  field === 'phone'
+                    ? 'phone-pad'
+                    : field === 'email'
+                    ? 'email-address'
+                    : 'default'
+                }
+                onFocus={() => setFocusedInput(field)}
+                onBlur={() => {
+                  setFocusedInput(null);
+                  setTouched(prev => ({ ...prev, [field]: true }));
+                  validateField(field, data[field]);
                 }}
-              >
-                <Text style={[styles.switchText, isRider && styles.switchTextActive]}>Rider</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.switchButton, !isRider && styles.switchActive]}
-                onPress={() => {
-                  setIsRider(false);
-                  resetForm();
-                }}
-              >
-                <Text style={[styles.switchText, !isRider && styles.switchTextActive]}>Driver</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-            >
-            
-            <View style={styles.card}>
-              {['firstName', 'lastName', 'email', 'phone', 'password'].map(field => (
-                <View key={field}>
-                  <TextInput
-                    style={[styles.input, focusedInput === field && styles.inputFocused]}
-                    placeholder={
-                      field === 'firstName'
-                        ? 'First Name'
-                        : field === 'lastName'
-                        ? 'Last Name'
-                        : field === 'email'
-                        ? 'Email'
-                        : field === 'phone'
-                        ? 'Phone Number'
-                        : 'Password'
-                    }
-                    secureTextEntry={field === 'password'}
-                    keyboardType={
-                      field === 'phone'
-                        ? 'phone-pad'
-                        : field === 'email'
-                        ? 'email-address'
-                        : 'default'
-                    }
-                    onFocus={() => setFocusedInput(field)}
-                    onBlur={() => {
-                      setFocusedInput(null);
-                      setTouched(prev => ({ ...prev, [field]: true }));
-                      validateField(field, data[field]);
-                    }}
-                    value={data[field]}
-                    onChangeText={text => handleInputChange(field, text)}
-                  />
-                  {touched[field] && errors[field] && (
-                    <Text style={styles.error}>{errors[field]}</Text>
-                  )}
-                </View>
-              ))}
-
-              <View style={styles.dropdownWrapper}>
-                <DropDownPicker
-                  open={open}
-                  value={gender}
-                  items={genderItems}
-                  setOpen={setOpen}
-                  setValue={callback => {
-                    const value = callback(gender);
-                    setGender(value);
-                    handleInputChange('gender', value);
-                    setTouched(prev => ({ ...prev, gender: true }));
-                    validateField('gender', value);
-                  }}
-                  placeholder="Select Gender"
-                  placeholderStyle={{ color: '#6B7280' }}
-                  style={styles.dropdown}
-                  dropDownContainerStyle={styles.dropdownContainer}
-                  textStyle={{ color: '#1F2937', fontSize: 15 }}
-                  zIndex={1000}
-                />
-              </View>
-              {touched.gender && errors.gender && (
-                <Text style={styles.error}>{errors.gender}</Text>
+                value={data[field]}
+                onChangeText={text => handleInputChange(field, text)}
+              />
+              {touched[field] && errors[field] && (
+                <Text style={styles.error}>{errors[field]}</Text>
               )}
-
-              <TouchableOpacity
-                style={[styles.ctaButton, !isFormValid() && styles.ctaDisabled]}
-                onPress={handleSubmit}
-                disabled={!isFormValid()}
-              >
-                <Text style={styles.ctaText}>Continue</Text>
-                <Icon
-                  name="arrow-forward-circle-outline"
-                  size={22}
-                  color="#fff"
-                  style={styles.ctaIcon}
-                />
-              </TouchableOpacity>
             </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+          ))}
+
+          <View style={styles.dropdownWrapper}>
+            <DropDownPicker
+              open={open}
+              value={gender}
+              items={genderItems}
+              setOpen={setOpen}
+              setValue={callback => {
+                const value = callback(gender);
+                setGender(value);
+                handleInputChange('gender', value);
+                setTouched(prev => ({ ...prev, gender: true }));
+                validateField('gender', value);
+              }}
+              placeholder="Select Gender"
+              placeholderStyle={{ color: '#6B7280' }}
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+              textStyle={{ color: '#1F2937', fontSize: 15 }}
+              zIndex={1000}
+            />
+          </View>
+          {touched.gender && errors.gender && (
+            <Text style={styles.error}>{errors.gender}</Text>
+          )}
+
+          <TouchableOpacity
+            style={[styles.ctaButton, !isFormValid() && styles.ctaDisabled]}
+            onPress={handleSubmit}
+            disabled={!isFormValid()}
+          >
+            <Text style={styles.ctaText}>Continue</Text>
+            <Icon
+              name="arrow-forward-circle-outline"
+              size={22}
+              color="#fff"
+              style={styles.ctaIcon}
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };
 
 export default SignupScreen;
 
-// const PRIMARY = '#5A67D8';
-const PRIMARY='#1e40af';
+// Styles — Add this below
+const PRIMARY = '#1e40af';
 const BORDER_DEFAULT = '#D1D5DB';
 const BORDER_FOCUSED = PRIMARY;
 
@@ -506,12 +499,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0F172A',
   },
-  content: {
-    marginTop:20,
+  fixedHeader: {
+    backgroundColor: '#0F172A',
     padding: 24,
   },
+  scrollableForm: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
   heading: {
-    marginLeft:10,
+    marginLeft: 10,
     fontSize: 20,
     fontWeight: 'bold',
     color: '#E2E8F0',
@@ -573,7 +571,7 @@ const styles = StyleSheet.create({
   },
   dropdownWrapper: {
     marginBottom: 8,
-    zIndex: 1000, // Ensure dropdown overlays keyboard
+    zIndex: 1000,
   },
   dropdown: {
     backgroundColor: '#FFFFFF',
@@ -613,3 +611,4 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 });
+

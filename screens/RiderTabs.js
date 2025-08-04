@@ -39,6 +39,7 @@ const RiderTabs = () => {
         headerShown: false,
         tabBarActiveTintColor: '#1e40af',
         tabBarInactiveTintColor: 'gray',
+        tabBarHideOnKeyboard: true,
       })}
     >
       <Tab.Screen name="Home" component={SearchRidesScreen} />

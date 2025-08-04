@@ -2,6 +2,7 @@ import React, {useState,useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, RefreshControl,Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../src/api/axios';
+import Header from '../components/headerItem';
 import BookingRequestItem from '../components/BookingRequestItem';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
@@ -84,36 +85,41 @@ const BookingRequestsScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F1F5F9', padding: 16,margin:10 }}>
-      <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 12 }}>
+    <View style={{ flex: 1, backgroundColor: '#0F172A' }}>
+      
+      //header
+      <Header/>
+      <View style={{paddingVertical:16,paddingHorizontal:20}}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 12 }}>
         Bookings
-      </Text>
+        </Text>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#1e40af" />
-      ) : requests.length === 0 ? (
-        <Text style={{ color: '#475569', fontSize: 16 }}>No ride requests found.</Text>
-      ) : (
-        <FlatList
-          data={requests}
-          keyExtractor={(item) => item.request_id}
-          renderItem={({ item }) => (
-            <BookingRequestItem
-              request={item}
-              onPress={() => {
-                // Future: show details or cancel modal
-              }}
-              onCancel={cancelRideRequest}
-              onComplete={markRideAsComplete}
-            />
-          )}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          contentContainerStyle={{ paddingBottom: 16 }}
-        />
-      )}
-      <Toast/>
+        {loading ? (
+          <ActivityIndicator size="large" color="#1e40af" />
+        ) : requests.length === 0 ? (
+          <Text style={{ color: '#fff', fontSize: 16 }}>No ride requests found.</Text>
+        ) : (
+          <FlatList
+            data={requests}
+            keyExtractor={(item) => item.request_id}
+            renderItem={({ item }) => (
+              <BookingRequestItem
+                request={item}
+                onPress={() => {
+                  // Future: show details or cancel modal
+                }}
+                onCancel={cancelRideRequest}
+                onComplete={markRideAsComplete}
+              />
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            contentContainerStyle={{ paddingBottom: 16 }}
+          />
+        )}
+        <Toast/>
+      </View>
     </View>
     
   );

@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation, useIsFocused } from '@react-navigation/native';
 import api from '../src/api/axios';
 import { useUnread } from './unreadContext';
+import ProfileScreen from './ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -39,7 +40,7 @@ const DriverTabs = () => {
           else if (route.name === 'Rides') iconName = 'list-outline';
           else if (route.name === 'Requests') iconName = 'notifications';
           else if (route.name === 'Chat') iconName = 'chatbubble-ellipses-outline';
-
+          else if (route.name === 'Profile') iconName = 'person-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         headerShown: false,
@@ -61,7 +62,9 @@ const DriverTabs = () => {
           },
         }}
       />
-      <Tab.Screen name="Chat" component={ChatScreen} />
+      {/* <Tab.Screen name="Chat" component={ChatScreen} /> */}
+      <Tab.Screen name="Profile" component={ProfileScreen}/>
+
     </Tab.Navigator>
   );
 };

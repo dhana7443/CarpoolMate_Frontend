@@ -26,25 +26,7 @@ const ResetPasswordScreen = ({ route, navigation }) => {
   };
 
   return (
-    // <View style={{ padding: 20 }}>
-    //   <Text>New Password:</Text>
-    //   <TextInput
-    //     value={newPassword}
-    //     onChangeText={setNewPassword}
-    //     placeholder="Enter new password"
-    //     secureTextEntry
-    //     style={{ borderWidth: 1, padding: 10, marginVertical: 10 }}
-    //   />
-    //   <Text>Confirm Password:</Text>
-    //   <TextInput
-    //     value={confirmPassword}
-    //     onChangeText={setConfirmPassword}
-    //     placeholder="Confirm password"
-    //     secureTextEntry
-    //     style={{ borderWidth: 1, padding: 10, marginVertical: 10 }}
-    //   />
-    //   <Button title="Reset Password" onPress={handleReset} />
-    // </View>
+
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Reset Password</Text>
@@ -62,7 +44,7 @@ const ResetPasswordScreen = ({ route, navigation }) => {
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleReset}>
             <Text style={styles.ctaText}>Reset Password</Text>
-            <Icon name="lock-closed-outline" size={22} color="#fff" style={styles.ctaIcon} />
+            {/* <Icon name="lock-closed-outline" size={22} color="#fff" style={styles.ctaIcon} /> */}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -72,7 +54,7 @@ const ResetPasswordScreen = ({ route, navigation }) => {
 
 export default ResetPasswordScreen;
 
-const PRIMARY = '#5A67D8';
+const PRIMARY = '#1e40af';
 const SCREEN_BG = '#0F172A';
 const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';
@@ -90,14 +72,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heading: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: DARK_TEXT,
     textAlign: 'left',
     marginBottom: 6,
   },
   subheading: {
-    fontSize: 16,
+    fontSize: 14,
     color: MUTED_TEXT,
     textAlign: 'left',
     marginBottom: 30,
@@ -122,7 +104,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
-    fontSize: 15,
+    fontSize: 14,
     color: '#1F2937',
     marginBottom: 16,
   },

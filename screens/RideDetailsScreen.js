@@ -86,6 +86,47 @@ const RideDetailsScreen = () => {
     );
   };
 
+  const handleCompleteRide = async () => {
+  Alert.alert(
+    'Confirm Completion',
+    'Are you sure you want to mark this ride as complete?',
+    [
+      { text: 'No' },
+      {
+        text: 'Yes',
+        onPress: async () => {
+          try {
+            const ride_id = await AsyncStorage.getItem('ride_id');
+            const token = await AsyncStorage.getItem('userToken');
+            console.log('token:',token);
+            console.log('ride_id',ride_id);
+            await api.put(`/rides/complete/${ride_id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+
+            Toast.show({
+              type: 'success',
+              text1: 'Ride marked as complete',
+            });
+
+            setRideDetails(null); // or refresh list
+            await AsyncStorage.removeItem('ride_id');
+          } catch (error) {
+            console.error('Complete Ride Error:', error.message);
+            Toast.show({
+              type: 'error',
+              text1: 'Failed to complete ride',
+            });
+          }
+        },
+      },
+    ]
+  );
+};
+
+
   if (loading) {
     return (
       <View style={tw`flex-1 justify-center items-center bg-gray-100 m-3`}>
@@ -107,25 +148,64 @@ const RideDetailsScreen = () => {
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-100`}>
     <ScrollView style={tw`px-4 pt-6`}>
-      <Text style={tw`text-xl font-bold text-black mb-4 mt-10`}>Ride Details</Text>
+      {/* <Text style={tw`text-xl font-bold text-black mb-4 mt-10`}>Ride Details</Text> */}
+      <View style={tw`flex-row justify-between items-center mb-4 mt-10`}>
+        <Text style={tw`text-xl font-bold text-black`}>Ride Details</Text>
+        <TouchableOpacity onPress={() => Alert.alert('Edit Ride', 'Edit ride screen or modal')}>
+          <Ionicons name="create-outline" size={22} color="#2563eb" />
+        </TouchableOpacity>
+      </View>
+
 
       <View style={tw`bg-white rounded-2xl p-4 border border-gray-200 mb-6`}>
-        <Text style={tw`text-base font-semibold text-black mb-2`}>
-          Ride Created
+
+        
+
+        <Text style={tw`font-medium text-gray-800`}>
+          From:{' '}
+          <Text style={tw`text-sm text-gray-700 font-normal`}>
+            {rideDetails.originStopName}
+          </Text>
+        </Text>
+        
+
+        <Text style={tw`font-medium text-gray-800`}>
+          To:{' '}
+          <Text style={tw`text-sm text-gray-700 font-normal`}>
+            {rideDetails.destinationStopName}
+          </Text>
         </Text>
 
-        <Text style={tw`text-sm text-gray-700 mb-1`}>
-          From: <Text style={tw`font-medium text-gray-800`}>{rideDetails.originStopName}</Text>
-        </Text>
-        <Text style={tw`text-sm text-gray-700 mb-1`}>
-          To: <Text style={tw`font-medium text-gray-800`}>{rideDetails.destinationStopName}</Text>
-        </Text>
-        <Text style={tw`text-sm text-gray-700 mb-1`}>
+        {/* <Text style={tw`text-sm text-gray-700 mb-1`}>
           Departure: {new Date(rideDetails.departure_time).toLocaleString()}
+        </Text> */}
+
+        <Text style={tw`font-medium text-gray-800`}>
+          From:{' '}
+          <Text style={tw`text-sm text-gray-700 font-normal`}>
+            {rideDetails.departure_time}
+          </Text>
         </Text>
+        
         <Text style={tw`text-sm text-gray-700 mb-1`}>
           Available Seats: {rideDetails.available_seats}
         </Text>
+
+        <View style={tw`flex-row justify-between mt-2`}>
+          <TouchableOpacity
+            style={tw`bg-red-600 py-2 px-4 rounded-xl flex-1 mr-2`}
+            onPress={handleCancelRide}
+          >
+            <Text style={tw`text-white text-center font-semibold`}>Cancel Ride</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={tw`bg-green-600 py-2 px-4 rounded-xl flex-1 ml-2`}
+            onPress={handleCompleteRide}
+          >
+            <Text style={tw`text-white text-center font-semibold`}>Complete</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Toggle Subroutes */}
         <TouchableOpacity
@@ -168,13 +248,6 @@ const RideDetailsScreen = () => {
         )}
 
 
-        {/* Cancel Button */}
-        <TouchableOpacity
-          style={tw`bg-red-600 py-2 px-4 mt-5 rounded-xl`}
-          onPress={handleCancelRide}
-        >
-          <Text style={tw`text-white text-center font-semibold`}>Cancel Ride</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   </SafeAreaView>

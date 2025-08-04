@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import api from '../src/api/axios';
 import {
   View,
@@ -16,7 +16,19 @@ import { useNavigation } from '@react-navigation/native';
 const EmailVerificationScreen = () => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [timer, setTimer] = useState(120);
   const navigation = useNavigation();
+
+  const RESEND_INTERVAL=120;
+  useEffect(() => {
+    let countdown;
+    if (timer > 0) {
+      countdown = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(countdown);
+  }, [timer]);
 
   const handleVerify = async () => {
     if (!email || !otp) {
@@ -35,6 +47,23 @@ const EmailVerificationScreen = () => {
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       Alert.alert('Verification Failed', message);
+    }
+  };
+
+
+  const handleResendOtp = async () => {
+    if (!email) {
+      Alert.alert('Missing Email', 'Please enter your email to resend OTP.');
+      return;
+    }
+
+    try {
+      await api.post('/users/resend-otp', { email });
+      Alert.alert('OTP Sent', 'A new OTP has been sent to your email.');
+      setTimer(RESEND_INTERVAL);
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      Alert.alert('Error', message);
     }
   };
 
@@ -74,6 +103,19 @@ const EmailVerificationScreen = () => {
               style={styles.ctaIcon}
             />
           </TouchableOpacity>
+
+          {/* Resend OTP Section */}
+          <View style={styles.resendContainer}>
+            {timer > 0 ? (
+              <Text style={styles.timerText}>
+                Resend OTP in {timer} seconds
+              </Text>
+            ) : (
+              <TouchableOpacity onPress={handleResendOtp}>
+                <Text style={styles.resendText}>Resend OTP</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -153,5 +195,18 @@ const styles = StyleSheet.create({
   },
   ctaIcon: {
     marginTop: 1,
+  },
+  resendContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  timerText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  resendText: {
+    color: PRIMARY,
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

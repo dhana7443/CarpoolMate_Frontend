@@ -130,12 +130,12 @@ const LoginScreen = () => {
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleLogin}>
             <Text style={styles.ctaText}>Login</Text>
-            <Icon
+            {/* <Icon
               name="arrow-forward-circle-outline"
               size={22}
               color="#fff"
               style={styles.ctaIcon}
-            />
+            /> */}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={()=>navigation.navigate('ForgotPassword')}>
@@ -156,7 +156,7 @@ const LoginScreen = () => {
 
 export default LoginScreen;
 
-const PRIMARY = '#5A67D8';
+const PRIMARY = '#1e40af';
 const SCREEN_BG = '#0F172A';
 const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';

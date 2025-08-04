@@ -19,6 +19,7 @@ import { parseJwt } from '../utils/jwt';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PreviousRideItem from '../components/PreviousRideItem';
+import Header from '../components/headerItem';
 
 const SearchRidesScreen = () => {
   const [fromLocations, setFromLocations] = useState([]);
@@ -154,7 +155,7 @@ const SearchRidesScreen = () => {
   return (
     <ScrollView style={styles.container}>
       {/* Header with Logo, App Name, Hamburger */}
-      <View style={styles.headerContainer}>
+      {/* <View style={styles.headerContainer}>
         <View style={styles.logoRow}>
           <Image source={require('../images/car.png')} style={styles.logo} />
           <Text style={styles.appName}>
@@ -162,58 +163,62 @@ const SearchRidesScreen = () => {
             <Text style={styles.appNameBlack}>Mate</Text>
           </Text>
         </View>
-        <TouchableOpacity onPress={getProfile}>
+        <TouchableOpacity>
           <Ionicons name="menu" size={30} color="#ffffff" />
         </TouchableOpacity>
-      </View>
-    //Search Card
-    <View style={styles.searchCard}>
-      <Text style={styles.heading}>Search Rides</Text>
+      </View> */}
 
-       {/* From Location Picker */}
-       {/* <Text style={tw`mb-2 text-gray-800`}>From</Text> */}
-       <Picker selectedValue={selectedFrom} onValueChange={(val) => {
-        setSelectedFrom(val);
-        setSelectedTo('');
+    <Header/>
+      
+    <View style={{flex:1,paddingVertical:16,paddingHorizontal:23}}>
+      //Search Card
+      <View style={styles.searchCard}>
+        <Text style={styles.heading}>Search Rides</Text>
+
+        {/* From Location Picker */}
+        {/* <Text style={tw`mb-2 text-gray-800`}>From</Text> */}
+        <Picker selectedValue={selectedFrom} onValueChange={(val) => {
+          setSelectedFrom(val);
+          setSelectedTo('');
+          
+        }}>
+          <Picker.Item label="Select From Location" value="" />
+          {fromLocations.map((name, idx) => (
+            <Picker.Item label={name} value={name} key={idx} />
+          ))}
+        </Picker>
+
+        {/* To Location Picker */}
+        {/* <Text style={tw`mt-4 mb-2 text-gray-800`}>To</Text> */}
+        <Picker selectedValue={selectedTo} onValueChange={setSelectedTo}>
+          <Picker.Item label="Select To Location" value="" />
+          {toLocations.map((name, idx) => (
+            <Picker.Item label={name} value={name} key={idx} />
+          ))}
+        </Picker>
         
-      }}>
-        <Picker.Item label="Select From Location" value="" />
-        {fromLocations.map((name, idx) => (
-          <Picker.Item label={name} value={name} key={idx} />
-        ))}
-      </Picker>
 
-      {/* To Location Picker */}
-      {/* <Text style={tw`mt-4 mb-2 text-gray-800`}>To</Text> */}
-       <Picker selectedValue={selectedTo} onValueChange={setSelectedTo}>
-         <Picker.Item label="Select To Location" value="" />
-         {toLocations.map((name, idx) => (
-          <Picker.Item label={name} value={name} key={idx} />
-        ))}
-      </Picker>
-      
+        {/* Search Button */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#1e40af',
+            paddingVertical: 12,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop:15
+          }}
+          onPress={searchRides}
+          disabled={searchLoading}
+        >
+          {searchLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Search Rides</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
-      {/* Search Button */}
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#1e40af',
-          paddingVertical: 12,
-          borderRadius: 8,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop:15
-        }}
-        onPress={searchRides}
-        disabled={searchLoading}
-      >
-        {searchLoading ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Search Rides</Text>
-        )}
-      </TouchableOpacity>
-    </View>
-      
       //my rides
       <View style={styles.previousRidesCard}>
         <Text style={styles.previousRidesHeading}>Previous Rides</Text>
@@ -233,6 +238,8 @@ const SearchRidesScreen = () => {
           ))
         )}
       </View>
+    </View>
+  
     </ScrollView>
   );
 };
@@ -243,17 +250,17 @@ const PRIMARY = '#5A67D8';
 const TEXT_LIGHT = '#F8FAFC'; // Light slate
 const TEXT_ACCENT = '#38BDF8'; // Cyan-400
 const SCREEN_BG = '#0F172A';
-// const SCREEN_BG='white';
+
 const styles = StyleSheet.create({
   container:{
-    // backgroundColor:'#f1f5f9',
     backgroundColor:SCREEN_BG,
-    padding:20
+    // padding:20
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    
     marginBottom: 16,
     marginTop: 12,
     paddingHorizontal: 4,
