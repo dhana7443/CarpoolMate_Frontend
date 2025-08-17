@@ -1,5 +1,5 @@
 import React, {useState,useCallback } from 'react';
-import { View, Text, FlatList, ActivityIndicator, RefreshControl,Alert } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl,Alert, StyleSheet,ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../src/api/axios';
 import Header from '../components/headerItem';
@@ -7,6 +7,7 @@ import BookingRequestItem from '../components/BookingRequestItem';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
+import tw from 'twrnc';
 
 const BookingRequestsScreen = () => {
   const [requests, setRequests] = useState([]);
@@ -24,6 +25,7 @@ const BookingRequestsScreen = () => {
       const { data } = await api.get('/ride-requests/rider-requests', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(data);
       setRequests(data.requests);
     } catch (err) {
       console.error('Error fetching ride requests:', err);
@@ -85,44 +87,70 @@ const BookingRequestsScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0F172A' }}>
-      
-      //header
+    <View style={styles.container}> 
+      {/* header */}
       <Header/>
-      <View style={{paddingVertical:16,paddingHorizontal:20}}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 12 }}>
-        Bookings
-        </Text>
+      <View style={{flex:1,padding:16}}>
+        <View style={styles.card}> 
+          
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 12 }}>
+          Bookings
+          </Text>
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#1e40af" />
-        ) : requests.length === 0 ? (
-          <Text style={{ color: '#fff', fontSize: 16 }}>No ride requests found.</Text>
-        ) : (
-          <FlatList
-            data={requests}
-            keyExtractor={(item) => item.request_id}
-            renderItem={({ item }) => (
-              <BookingRequestItem
-                request={item}
-                onPress={() => {
-                  // Future: show details or cancel modal
-                }}
-                onCancel={cancelRideRequest}
-                onComplete={markRideAsComplete}
-              />
-            )}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            contentContainerStyle={{ paddingBottom: 16 }}
-          />
-        )}
-        <Toast/>
+          {loading ? (
+            <ActivityIndicator size="large" color="#1e40af" />
+          ) : requests.length === 0 ? (
+            <Text style={{ color: '#000', fontSize: 16 }}>No ride requests found.</Text>
+          ) : (
+            <FlatList
+              data={requests}
+              keyExtractor={(item) => item.request_id}
+              renderItem={({ item }) => (
+                
+                  <BookingRequestItem
+                  request={item}
+                  onPress={() => {
+                    // Future: show details or cancel modal
+                  }}
+                  onCancel={cancelRideRequest}
+                  onComplete={markRideAsComplete}
+                />
+                
+                
+              )}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+              contentContainerStyle={{ paddingBottom: 16 }}
+            />
+          )}
+          <Toast/>
+        
       </View>
+      </View>
+      
+      
     </View>
     
   );
 };
 
 export default BookingRequestsScreen;
+
+const styles=StyleSheet.create({
+  container:{
+    flex:1,
+    backgroundColor:'#f9f9f9',
+  },
+  card: {
+    backgroundColor: '#fff',
+    marginTop:40,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+})

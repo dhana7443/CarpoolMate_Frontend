@@ -7,6 +7,7 @@ import tw from 'twrnc';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { useUnread } from './unreadContext';
+import Header from '../components/headerItem';
 
 const RideRequestsScreen = () => {
   const [rideRequests, setRideRequests] = useState(null);
@@ -78,36 +79,69 @@ const RideRequestsScreen = () => {
   };
 
   return (
-    <ScrollView style={tw`bg-white p-4`}>
+    <View style={styles.container}>
+      <Header/>
+    <ScrollView style={tw`p-4`}>
+
       {!rideRequests ? (
         <Text style={tw`text-center text-gray-500`}>Loading...</Text>
       ) : !rideRequests?.requests || rideRequests.requests.length === 0 ? (
         <Text style={tw`text-center  m-7 text-gray-500`}>No ride requests</Text>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.title}>Ride Info</Text>
-          <Text style={styles.header}>
-            {rideRequests.origin} to {rideRequests.destination}
-          </Text>
-          <Text style={styles.info}>Departure: {new Date(rideRequests.departure_time).toLocaleString()}</Text>
-          <Text style={styles.info}>Available Seats: {rideRequests.available_seats}</Text>
-          <Text style={styles.info}>Ride Status: {rideRequests.status}</Text>
-
+          
           <Text style={styles.sectionHeader}>Requests:</Text>
           {rideRequests.requests.map((req) => (
             <View key={req.request_id} style={styles.requestCard}>
               <View style={tw`flex-row justify-between items-center`}>
-                <Text style={styles.name}>{req.rider.name}</Text>
-                <Text style={[styles.status, getStatusStyle(req.status)]}>
+                {/* <Text style={styles.name}>{req.rider.name}</Text> */}
 
+                <Text style={tw`font-medium text-gray-800`}>
+                  Name:{' '}
+                  <Text style={tw`text-sm text-gray-700 font-normal`}>
+                    {req.rider.name}
+                  </Text>
+                </Text>
+
+                <Text style={[styles.status, getStatusStyle(req.status)]}>
                   {req.status === 'CompletedByRider' ? 'Completed' : req.status}
                 </Text>
               </View>
-              <Text style={styles.email}>{req.rider.email}</Text>
-              <Text>From: {req.rider_from_stop}</Text>
-              <Text>To: {req.rider_to_stop}</Text>
-              <Text>Requested At: {new Date(req.requested_at).toLocaleString()}</Text>
+              {/* <Text style={styles.email}>{req.rider.email}</Text> */}
 
+              <Text style={tw`font-medium text-gray-800`}>
+                  Email:{' '}
+                  <Text style={tw`text-sm text-gray-700 font-normal`}>
+                    {req.rider.email}
+                  </Text>
+                </Text>
+
+              {/* <Text>From: {req.rider_from_stop}</Text> */}
+
+              <Text style={tw`font-medium text-gray-800`}>
+                  From:{' '}
+                  <Text style={tw`text-sm text-gray-700 font-normal`}>
+                    {req.rider_from_stop}
+                  </Text>
+                </Text>
+
+              {/* <Text>To: {req.rider_to_stop}</Text> */}
+
+              <Text style={tw`font-medium text-gray-800`}>
+                  To:{' '}
+                  <Text style={tw`text-sm text-gray-700 font-normal`}>
+                    {req.rider_to_stop}
+                  </Text>
+              </Text>
+
+              {/* <Text>Requested At: {new Date(req.requested_at).toLocaleString()}</Text> */}
+
+              <Text style={tw`font-medium text-gray-800`}>
+                  Requested:{' '}
+                  <Text style={tw`text-sm text-gray-700 font-normal`}>
+                    {new Date(req.requested_at).toLocaleString()}
+                  </Text>
+                </Text>
               {req.status === 'Pending' && (
                 <View style={tw`flex-row justify-between mt-3`}>
                   <TouchableOpacity
@@ -130,10 +164,16 @@ const RideRequestsScreen = () => {
       )}
       <Toast/>
     </ScrollView>
+    </View>
+    
   );
 };
 
 const styles = StyleSheet.create({
+  container:{
+    flex:1,
+    backgroundColor:'#f9f9f9'
+  },
   card: {
     backgroundColor: '#fff',
     flex:1,
@@ -166,8 +206,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     fontWeight: '600',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
     paddingBottom: 4,
   },
   requestCard: {
@@ -175,6 +213,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginTop: 10,
+    elevation:0.5
   },
   name: {
     fontWeight: '600',

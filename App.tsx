@@ -187,6 +187,7 @@ import DriverDetailsScreen from './screens/DriverDetailsScreen';
 import RiderTabs from './screens/RiderTabs';
 import SendPaymentScreen from './screens/paymentsScreen';
 import WalletScreen from './screens/walletSCreen';
+import EditRideScreen from './screens/EditRideScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -352,6 +353,8 @@ useEffect(() => {
             <Stack.Screen name="DriverDashboard" component={DriverTabs} />
             <Stack.Screen name="Payments" component={SendPaymentScreen}/>
             <Stack.Screen name="Wallet" component={WalletScreen}/>
+            <Stack.Screen name="EditRide" component={EditRideScreen}/>
+            
           </Stack.Navigator>
         </NavigationContainer>
         <Toast />

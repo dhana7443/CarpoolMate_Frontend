@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import styles from './BookingRequestItem.styles';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const statusColors = {
   Pending: '#facc15',
@@ -91,10 +92,18 @@ const BookingRequestItem = ({ request, onPress, onCancel, onComplete }) => {
                 }}
                 style={[
                   styles.badgeBase,
-                  { backgroundColor: '#a855f7' },
+                  { backgroundColor: '#a855f7',marginRight:12 },
                 ]}
               >
                 <Text style={styles.badgeText}>Complete</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* chat button */}
+            {request.status === 'Accepted' && (
+              <TouchableOpacity style={[styles.badgeBase,{backgroundColor:'#2563eb'}]} onPress={() => onChat(request)}>
+                {/* <Icon name="message-circle" size={18} color="#fff" /> */}
+                <Text style={styles.badgeText}>Chat</Text>
               </TouchableOpacity>
             )}
           </View>

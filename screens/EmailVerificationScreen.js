@@ -96,12 +96,12 @@ const EmailVerificationScreen = () => {
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleVerify}>
             <Text style={styles.ctaText}>Verify</Text>
-            <Icon
+            {/* <Icon
               name="checkmark-done-circle-outline"
               size={22}
               color="#fff"
               style={styles.ctaIcon}
-            />
+            /> */}
           </TouchableOpacity>
 
           {/* Resend OTP Section */}
@@ -124,7 +124,7 @@ const EmailVerificationScreen = () => {
 
 export default EmailVerificationScreen;
 
-const PRIMARY = '#5A67D8';
+const PRIMARY = '#1e40af';
 const SCREEN_BG = '#0F172A';
 const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';
@@ -142,14 +142,14 @@ const styles = StyleSheet.create({
     marginTop:30,
   },
   heading: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: DARK_TEXT,
     textAlign: 'left',
     marginBottom: 6,
   },
   subheading: {
-    fontSize: 16,
+    fontSize: 14,
     color: MUTED_TEXT,
     textAlign: 'left',
     marginBottom: 30,

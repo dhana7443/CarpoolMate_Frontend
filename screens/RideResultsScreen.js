@@ -112,87 +112,104 @@ const RideResultsScreen = () => {
           </Text>
         ) : (
           rides.map((ride) => (
-                <View
-    key={ride.ride_id}
-    style={tw`bg-white rounded-2xl p-4 mb-4 border border-gray-200`}
-  >
-    {/* Availability Badge on Top */}
-    <View
-      style={[
-        styles.badge,
-        { backgroundColor: ride.segment_available_seats > 0 ? '#16a34a' : '#dc2626' },
-      ]}
-    >
-      <Text style={styles.badgeText}>
-        {ride.segment_available_seats > 0 ? 'Available' : 'Full'}
-      </Text>
-    </View>
+            <View
+              key={ride.ride_id}
+              style={tw`bg-white rounded-2xl p-4 mb-4 border border-gray-200`}
+            >
+              {/* Availability Badge on Top */}
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: ride.segment_available_seats > 0 ? '#16a34a' : '#dc2626' },
+                ]}
+              >
+                <Text style={styles.badgeText}>
+                  {ride.segment_available_seats > 0 ? 'Available' : 'Full'}
+                </Text>
+              </View>
 
-    <Text style={tw`text-base font-semibold text-black mt-2`}>
-      Driver: {ride.driver_id?.name || ride.driver_name}
-    </Text>
-    <Text style={tw`text-sm text-gray-700`}>
-      Departure: {new Date(ride.departure_time).toLocaleString()}
-    </Text>
+              <Text style={tw`font-medium text-gray-800`}>
+                    Driver:{' '}
+                    <Text style={tw`text-sm text-gray-700 font-normal`}>
+                      {ride.driver_id?.name || ride.driver_name}
+                    </Text>
+              </Text>
 
-    <Text style={tw`text-sm text-gray-700`}>
-      Seats: {ride.segment_available_seats}
-    </Text>
+              <Text style={tw`font-medium text-gray-800`}>
+                    Departure:{' '}
+                    <Text style={tw`text-sm text-gray-700 font-normal`}>
+                      {ride.departure_time}
+                    </Text>
+              </Text>
 
-    {/* Book Ride Button */}
-    <TouchableOpacity
-      style={[
-        styles.bookButton,
-        { backgroundColor: ride.segment_available_seats === 0 ? '#9ca3af' : '#2563eb' },
-      ]}
-      disabled={ride.segment_available_seats === 0}
-      onPress={() => handleRideBooking(ride.ride_id, from, to, ride.route_id)}
-    >
-      <Text style={styles.bookButtonText}>
-        {ride.segment_available_seats === 0 ? 'Cannot Book' : 'Book Ride'}
-      </Text>
-    </TouchableOpacity>
+              <Text style={tw`font-medium text-gray-800`}>
+                    Available_seats:{' '}
+                    <Text style={tw`text-sm text-gray-700 font-normal`}>
+                      {ride.segment_available_seats}
+                    </Text>
+              </Text>
 
-    {/* Expand Route Info */}
-    <TouchableOpacity
-      style={tw`flex-row items-center mt-3`}
-      onPress={() => toggleExpand(ride.ride_id)}
-    >
-      <Ionicons
-        name={
-          expandedRideIds.includes(ride.ride_id)
-            ? 'chevron-up'
-            : 'chevron-down'
-        }
-        size={18}
-        style={tw`text-blue-600 mr-1`}
-      />
-      <Text style={tw`text-blue-600 font-medium`}>
-        {expandedRideIds.includes(ride.ride_id)
-          ? 'Hide Route Info'
-          : 'Show Route Info'}
-      </Text>
-    </TouchableOpacity>
+              <Text style={tw`font-medium text-gray-800`}>
+                Cost:{' '}
+                <Text style={tw`text-sm text-gray-700 font-normal`}>
+                  {ride.cost}
+                </Text>
+              </Text>
 
-    {expandedRideIds.includes(ride.ride_id) && (
-      <View style={tw`mt-3 bg-blue-50 rounded-xl px-3 py-2`}>
-        {ride.route_stops.map((stop, idx) => (
-          <View key={idx} style={tw`items-left`}>
-            <Text style={tw`text-sm text-gray-800`}>{stop.stop_name}</Text>
-            {idx < ride.route_stops.length - 1 && (
-              <Ionicons
-                name="arrow-down"
-                size={18}
-                style={tw`text-blue-500 my-1`}
-              />
-            )}
-          </View>
-        ))}
-      </View>
-    )}
-  </View>
-                    ))
-                  )}
+              {/* Book Ride Button */}
+              <TouchableOpacity
+                style={[
+                  styles.bookButton,
+                  { backgroundColor: ride.segment_available_seats === 0 ? '#9ca3af' : '#2563eb' },
+                ]}
+                disabled={ride.segment_available_seats === 0}
+                onPress={() => handleRideBooking(ride.ride_id, from, to, ride.route_id)}
+              >
+                <Text style={styles.bookButtonText}>
+                  {ride.segment_available_seats === 0 ? 'Cannot Book' : 'Book Ride'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Expand Route Info */}
+              <TouchableOpacity
+                style={tw`flex-row items-center mt-3`}
+                onPress={() => toggleExpand(ride.ride_id)}
+              >
+                <Ionicons
+                  name={
+                    expandedRideIds.includes(ride.ride_id)
+                      ? 'chevron-up'
+                      : 'chevron-down'
+                  }
+                  size={18}
+                  style={tw`text-blue-600 mr-1`}
+                />
+                <Text style={tw`text-blue-600 font-medium`}>
+                  {expandedRideIds.includes(ride.ride_id)
+                    ? 'Hide Route Info'
+                    : 'Show Route Info'}
+                </Text>
+              </TouchableOpacity>
+
+              {expandedRideIds.includes(ride.ride_id) && (
+                <View style={tw`mt-3 bg-blue-50 rounded-xl px-3 py-2`}>
+                  {ride.route_stops.map((stop, idx) => (
+                    <View key={idx} style={tw`items-left`}>
+                      <Text style={tw`text-sm text-gray-800`}>{stop.stop_name}</Text>
+                      {idx < ride.route_stops.length - 1 && (
+                        <Ionicons
+                          name="arrow-down"
+                          size={18}
+                          style={tw`text-blue-500 my-1`}
+                        />
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          ))
+        )}
 
         <Toast />
       </ScrollView>

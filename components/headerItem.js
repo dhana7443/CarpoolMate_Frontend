@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import tw from 'twrnc';
 
 const Header = ({ onMenuPress }) => {
   return (
@@ -27,13 +28,11 @@ const styles = StyleSheet.create({
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  backgroundColor: '#0F172A', // slate-700
+  backgroundColor: '#1E293B', // slate-700
   width: '100%',
   paddingVertical: 16,
   paddingHorizontal: 16, 
-  marginBottom:20,
-  borderBottomWidth:1,
-  borderColor:'#cbd5e1'
+  marginBottom:0,
   },
 
   logoRow: {
@@ -47,7 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   appName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   appNameBlue: {

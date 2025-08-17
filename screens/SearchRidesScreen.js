@@ -154,48 +154,41 @@ const SearchRidesScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header with Logo, App Name, Hamburger */}
-      {/* <View style={styles.headerContainer}>
-        <View style={styles.logoRow}>
-          <Image source={require('../images/car.png')} style={styles.logo} />
-          <Text style={styles.appName}>
-            <Text style={styles.appNameBlue}>CarPool</Text>
-            <Text style={styles.appNameBlack}>Mate</Text>
-          </Text>
-        </View>
-        <TouchableOpacity>
-          <Ionicons name="menu" size={30} color="#ffffff" />
-        </TouchableOpacity>
-      </View> */}
-
+      
     <Header/>
       
     <View style={{flex:1,paddingVertical:16,paddingHorizontal:23}}>
-      //Search Card
+      {/* Search Card */}
       <View style={styles.searchCard}>
         <Text style={styles.heading}>Search Rides</Text>
 
-        {/* From Location Picker */}
-        {/* <Text style={tw`mb-2 text-gray-800`}>From</Text> */}
-        <Picker selectedValue={selectedFrom} onValueChange={(val) => {
-          setSelectedFrom(val);
-          setSelectedTo('');
-          
-        }}>
-          <Picker.Item label="Select From Location" value="" />
-          {fromLocations.map((name, idx) => (
-            <Picker.Item label={name} value={name} key={idx} />
-          ))}
-        </Picker>
+        <View style={styles.input}>
+          {/* From Location Picker */}
+          {/* <Text style={tw`mb-2 text-gray-800`}>From</Text> */}
+          <Picker selectedValue={selectedFrom} onValueChange={(val) => {
+            setSelectedFrom(val);
+            setSelectedTo('');
+            
+          }}>
+            <Picker.Item label="Select From Location" value="" />
+            {fromLocations.map((name, idx) => (
+              <Picker.Item label={name} value={name} key={idx} />
+            ))}
+          </Picker>
+        </View>
 
         {/* To Location Picker */}
         {/* <Text style={tw`mt-4 mb-2 text-gray-800`}>To</Text> */}
-        <Picker selectedValue={selectedTo} onValueChange={setSelectedTo}>
+
+        <View style={styles.input}>
+          <Picker selectedValue={selectedTo} onValueChange={setSelectedTo}>
           <Picker.Item label="Select To Location" value="" />
           {toLocations.map((name, idx) => (
             <Picker.Item label={name} value={name} key={idx} />
           ))}
         </Picker>
+        </View>
+        
         
 
         {/* Search Button */}
@@ -219,7 +212,7 @@ const SearchRidesScreen = () => {
         </TouchableOpacity>
       </View>
 
-      //my rides
+      {/* my rides */}
       <View style={styles.previousRidesCard}>
         <Text style={styles.previousRidesHeading}>Previous Rides</Text>
 
@@ -256,18 +249,8 @@ const styles = StyleSheet.create({
     backgroundColor:SCREEN_BG,
     // padding:20
   },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    
-    marginBottom: 16,
-    marginTop: 12,
-    paddingHorizontal: 4,
-    
-  },
   searchCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -276,32 +259,22 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  appName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  appNameBlue: {
-    color: '#3B82F6',
-  },
-  appNameBlack: {
-    color: '#38BDF8',
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 40,
-    height: 40,
-    marginRight: 8,
-    borderRadius:20
+  input: {
+    height: 48,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D1D5DB',
+    borderWidth: 0.5,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: '#1F2937',
+    marginBottom: 14,
   },
   heading: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1e40af',
+    
     marginBottom: 16,
   },
   pickerContainer: {
@@ -323,17 +296,7 @@ const styles = StyleSheet.create({
     height: 48,
     color: '#334155',
   },
-  appName: {
-    fontSize: 20,      // optimized for small screens
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  primary: {
-    color: TEXT_ACCENT, // Cyan blue for "Carpool"
-  },
-  accent: {
-    color: TEXT_LIGHT,  // White for "Mate"
-  },
+  
   ctaButton: {
     backgroundColor: '#1e40af',
     paddingVertical: 14,
@@ -375,7 +338,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   previousRidesCard: {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#fff',
   borderRadius: 16,
   padding: 16,
   marginTop: 40,
@@ -393,6 +356,7 @@ previousRidesHeading: {
 },
 noRidesText: {
   color: '#64748b',
+  
 },
 
 });

@@ -500,6 +500,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
   },
   fixedHeader: {
+    marginTop:20,
     backgroundColor: '#0F172A',
     padding: 24,
   },
@@ -520,14 +521,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#CBD5E1',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   switchWrapper: {
     flexDirection: 'row',
     backgroundColor: '#E5E7EB',
     borderRadius: 30,
     padding: 5,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   switchButton: {
     flex: 1,

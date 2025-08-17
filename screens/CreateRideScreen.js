@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  ScrollView,
   Platform,
 } from 'react-native';
 
@@ -15,7 +14,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../src/api/axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import tw, { style } from 'twrnc';
+import Header from '../components/headerItem';
+
 
 const CreateRideScreen = () => {
 
@@ -136,6 +136,7 @@ const CreateRideScreen = () => {
   return (
 
     <View style={styles.container}>
+    <Header/>
     <View style={[styles.content, { marginTop: 30 }]}>
       <Text style={styles.heading}>Create a Ride</Text>
       <Text style={styles.subheading}>Fill in the details to offer a ride.</Text>
@@ -275,12 +276,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: DARK_TEXT,
+    color:'#fff',
     textAlign: 'left',
     marginBottom: 6,
   },
   subheading: {
     fontSize: 14,
     color: MUTED_TEXT,
+    color:'#fff',
     textAlign: 'left',
     marginBottom: 30,
   },

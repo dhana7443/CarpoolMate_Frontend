@@ -22,7 +22,9 @@ const LoginScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const [emailError,setEmailError]=useState('');
+  const [passwordError,setPasswordError]=useState('');
+  const [isFormValid,setIsFormValid]=useState(false);
 
   //upload token
   const uploadFcmTokenForCurrentUser = async () => {
@@ -64,7 +66,26 @@ const LoginScreen = () => {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    // Run validations on every change and update form validity
+    const isValid = !validateEmail(email) && !validatePassword(password);
+    setIsFormValid(isValid);
+  }, [email, password]);
+
+
   const handleLogin = async () => {
+
+    const emailErr = validateEmail(email);
+    const passwordErr = validatePassword(password);
+
+    setEmailError(emailErr);
+    setPasswordError(passwordErr);
+
+    if (emailErr || passwordErr) {
+      return; // Don't submit if errors
+    }
+
+
     try {
       const response = await api.post('/users/login', {
         email,
@@ -92,6 +113,35 @@ const LoginScreen = () => {
     }
   };
 
+  const validateEmail = (value) => {
+    if (!value.trim()) {
+      return 'Email is required';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      return 'Please enter a valid email';
+    }
+    return '';
+  };
+
+  const validatePassword = (value) => {
+    if (!value) {
+      return 'Password is required';
+    }
+    return '';
+  };
+
+
+  const validateForm = () => {
+    const emailErr = validateEmail(email);
+    const passwordErr = validatePassword(password);
+
+    setEmailError(emailErr);
+    setPasswordError(passwordErr);
+
+    return !emailErr && !passwordErr;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -117,25 +167,41 @@ const LoginScreen = () => {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            // onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError(''); // Clear error on typing
+            }}
+            onBlur={() => {
+              const errorMsg = validateEmail(email);
+              setEmailError(errorMsg);
+            }}
           />
+
+          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+
           <TextInput
             placeholder="Password"
             placeholderTextColor="#999"
             style={styles.input}
             secureTextEntry
             value={password}
-            onChangeText={setPassword}
+            // onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError('');
+            }}
+            onBlur={() => {
+              const errorMsg = validatePassword(password);
+              setPasswordError(errorMsg);
+            }}
           />
+
+          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleLogin}>
             <Text style={styles.ctaText}>Login</Text>
-            {/* <Icon
-              name="arrow-forward-circle-outline"
-              size={22}
-              color="#fff"
-              style={styles.ctaIcon}
-            /> */}
+            
           </TouchableOpacity>
 
           <TouchableOpacity onPress={()=>navigation.navigate('ForgotPassword')}>
@@ -252,6 +318,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 14,
+    fontWeight:400
   },
   signupText: {
     fontSize: 15,
@@ -262,5 +329,12 @@ const styles = StyleSheet.create({
   signupLink: {
     color: '#9c27b0',
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    // marginTop: 0,
+    marginBottom: 14,
+    marginLeft: 4,
   },
 });
