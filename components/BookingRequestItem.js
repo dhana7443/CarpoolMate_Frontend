@@ -11,7 +11,7 @@ const statusColors = {
   CompletedByRider: '#4ade80' // blue for completed
 };
 
-const BookingRequestItem = ({ request, onPress, onCancel, onComplete }) => {
+const BookingRequestItem = ({ request, onPress, onCancel, onComplete,onChat }) => {
   return (
     <TouchableOpacity
       style={styles.container}
@@ -101,11 +101,20 @@ const BookingRequestItem = ({ request, onPress, onCancel, onComplete }) => {
 
             {/* chat button */}
             {request.status === 'Accepted' && (
-              <TouchableOpacity style={[styles.badgeBase,{backgroundColor:'#2563eb'}]} onPress={() => onChat(request)}>
-                {/* <Icon name="message-circle" size={18} color="#fff" /> */}
+              <TouchableOpacity
+                style={[styles.badgeBase, { backgroundColor: '#2563eb' }]}
+                onPress={() =>
+                  onChat({
+                    rideId: request.ride.ride_id,
+                    requestId: request.request_id,
+                    riderId: request.rider_id
+                  })
+                }
+              >
                 <Text style={styles.badgeText}>Chat</Text>
               </TouchableOpacity>
             )}
+
           </View>
         )}
       </View>

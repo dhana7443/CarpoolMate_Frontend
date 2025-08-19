@@ -188,6 +188,7 @@ import RiderTabs from './screens/RiderTabs';
 import SendPaymentScreen from './screens/paymentsScreen';
 import WalletScreen from './screens/walletSCreen';
 import EditRideScreen from './screens/EditRideScreen';
+import ChatScreen from './screens/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -340,6 +341,7 @@ useEffect(() => {
       <UnreadProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+            
             <Stack.Screen name="Home" component={HomeScreenComponent} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
@@ -354,7 +356,8 @@ useEffect(() => {
             <Stack.Screen name="Payments" component={SendPaymentScreen}/>
             <Stack.Screen name="Wallet" component={WalletScreen}/>
             <Stack.Screen name="EditRide" component={EditRideScreen}/>
-            
+            <Stack.Screen name="chat" component={ChatScreen}/>
+
           </Stack.Navigator>
         </NavigationContainer>
         <Toast />

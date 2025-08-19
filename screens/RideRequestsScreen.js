@@ -8,10 +8,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { useUnread } from './unreadContext';
 import Header from '../components/headerItem';
+import { useNavigation } from '@react-navigation/native';
+
 
 const RideRequestsScreen = () => {
   const [rideRequests, setRideRequests] = useState(null);
   const {fetchUnreadCount,setUnreadCount}=useUnread();
+  const navigation=useNavigation();
 
   useFocusEffect(
     useCallback(() => {
@@ -32,7 +35,7 @@ const RideRequestsScreen = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRideRequests(res.data);
-
+      console.log(res.data);
       //mark all ride requests as seen
 
       await api.put(`ride-requests/ride/${ride_id}/mark-seen`,{
@@ -89,7 +92,6 @@ const RideRequestsScreen = () => {
         <Text style={tw`text-center  m-7 text-gray-500`}>No ride requests</Text>
       ) : (
         <View style={styles.card}>
-          
           <Text style={styles.sectionHeader}>Requests:</Text>
           {rideRequests.requests.map((req) => (
             <View key={req.request_id} style={styles.requestCard}>
@@ -102,6 +104,8 @@ const RideRequestsScreen = () => {
                     {req.rider.name}
                   </Text>
                 </Text>
+
+                
 
                 <Text style={[styles.status, getStatusStyle(req.status)]}>
                   {req.status === 'CompletedByRider' ? 'Completed' : req.status}
@@ -141,8 +145,8 @@ const RideRequestsScreen = () => {
                   <Text style={tw`text-sm text-gray-700 font-normal`}>
                     {new Date(req.requested_at).toLocaleString()}
                   </Text>
-                </Text>
-              {req.status === 'Pending' && (
+              </Text>
+              {/* {req.status === 'Pending' && (
                 <View style={tw`flex-row justify-between mt-3`}>
                   <TouchableOpacity
                     style={[styles.actionBtn, { backgroundColor: '#28a745' }]}
@@ -158,6 +162,57 @@ const RideRequestsScreen = () => {
                   </TouchableOpacity>
                 </View>
               )}
+
+              {req.status === 'Accepted' && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: '#2563eb' }]}
+                  onPress={() =>
+                    navigation.navigate('ChatScreen', {
+                      rideId: req.ride_id,
+                      requestId: req.request_id,
+                      riderId: req.rider_id
+                    })
+                  }
+                >
+                  <Text style={styles.btnText}>Chat</Text>
+                </TouchableOpacity>
+              )} */}
+
+              <View >
+                {req.status === 'Pending' ? (
+                  <View style={tw`flex-row justify-between mt-3`}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#28a745' }]}
+                      onPress={() => handleAction(req.request_id, 'Accepted')}
+                    >
+                      <Text style={styles.btnText}>Accept</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#dc3545' }]}
+                      onPress={() => handleAction(req.request_id, 'Rejected')}
+                    >
+                      <Text style={styles.btnText}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : req.status === 'Accepted' ? (
+                  <View style={tw` mt-3`}>
+                    <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: '#2563eb' }]}
+                    onPress={() =>
+                      navigation.navigate('chat', {
+                        rideId: rideRequests.ride_id,
+                        requestId: req.request_id,
+                        riderId: req.rider.id
+                      })
+                    }
+                    >
+                      <Text style={styles.btnText}>Chat</Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                ) : null}
+              </View>
+
             </View>
           ))}
         </View>

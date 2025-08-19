@@ -5,7 +5,7 @@ import api from '../src/api/axios';
 import Toast from 'react-native-toast-message';
 import { useFocusEffect } from '@react-navigation/native';
 import tw from 'twrnc';
-
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const SendPaymentScreen = ({ route, navigation }) => {
   const { requestId } = route.params;

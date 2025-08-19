@@ -25,7 +25,7 @@ const BookingRequestsScreen = () => {
       const { data } = await api.get('/ride-requests/rider-requests', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(data);
+      console.log(data.requests);
       setRequests(data.requests);
     } catch (err) {
       console.error('Error fetching ride requests:', err);
@@ -86,6 +86,9 @@ const BookingRequestsScreen = () => {
     fetchRequests().finally(() => setRefreshing(false));
   };
 
+  const handleChat=({rideId,requestId,riderId})=>{
+    navigation.navigate('chat',{rideId,requestId,riderId});
+  }
   return (
     <View style={styles.container}> 
       {/* header */}
@@ -114,8 +117,8 @@ const BookingRequestsScreen = () => {
                   }}
                   onCancel={cancelRideRequest}
                   onComplete={markRideAsComplete}
+                  onChat={handleChat}
                 />
-                
                 
               )}
               refreshControl={
