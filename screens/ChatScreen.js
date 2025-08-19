@@ -8,21 +8,28 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet
+  StyleSheet,
+  Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io } from 'socket.io-client';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { parseJwt } from '../utils/jwt';
-import api from '../src/api/axios'; // for REST fetch
+import api from '../src/api/axios'; 
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import tw from 'twrnc';
 
 const ChatScreen = ({ route }) => {
   const { rideId } = route.params;
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [replyingTo,setReplyingTo]=useState(null);
   const socketRef = useRef(null);
   const flatListRef = useRef();
   const currentUserIdRef = useRef(null);
+  const navigation=useNavigation();
+
 
   // Fetch old messages once
   useEffect(() => {
@@ -37,6 +44,8 @@ const ChatScreen = ({ route }) => {
         const normalized = res.data.map((m) => ({
           ...m,
           sender: m.sender_id?.toString(),
+          replyTo:m.reply_to,
+          replyToContent:res.data.find(r => r._id === m.reply_to)?.message || null
         }));
 
         setMessages(normalized);
@@ -73,15 +82,25 @@ const ChatScreen = ({ route }) => {
           ...msg,
           sender: msg.sender?.toString(),
           createdAt: msg.createdAt || new Date().toISOString(),
+          replyTo: msg.replyTo?._id || null,
+          replyToContent: msg.replyTo?.message || null
         };
 
         setMessages((prev) => {
-          const exists = prev.some(
-            (m) => (m._id && normalizedMsg._id && m._id === normalizedMsg._id) ||
-                   (m.localId && normalizedMsg.localId && m.localId === normalizedMsg.localId)
+          const index = prev.findIndex(
+            (m) =>
+              (m._id && normalizedMsg._id && m._id === normalizedMsg._id) ||
+              (m.localId && normalizedMsg.localId && m.localId === normalizedMsg.localId)
           );
-          if (exists) return prev;
 
+          if (index !== -1) {
+            //  Update existing message (important for delete state sync)
+            const updated = [...prev];
+            updated[index] = { ...updated[index], ...normalizedMsg };
+            return updated;
+          }
+
+          //  Otherwise add as new
           const updated = [...prev, normalizedMsg];
           updated.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
           return updated;
@@ -116,7 +135,8 @@ const ChatScreen = ({ route }) => {
       sender: currentUserIdRef.current,
       message: inputMessage,
       createdAt: new Date().toISOString(),
-      pending:true
+      pending:true,
+      replyTo:replyingTo?._id || null
     };
 
     console.log(localMsg.timestamp);
@@ -128,41 +148,102 @@ const ChatScreen = ({ route }) => {
       rideId,
       senderId:currentUserIdRef.current,
       message: inputMessage,
+      replyTo:localMsg.replyTo,
       createdAt: localMsg.createdAt,
       localId
     });
 
     setInputMessage('');
+    setReplyingTo(null);
   };
+
+  const deleteMessage = async (msg) => {
+    if(!msg._id && !msg.localId) return;
+    if (msg.sender !== currentUserIdRef.current) return;
+
+    const token=await AsyncStorage.getItem('userToken');
+    Alert.alert(
+      'Delete Message',
+      'Are you sure you want to delete this message?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete', style: 'destructive', onPress: async () => {
+            try {
+
+              setMessages((prev) =>
+                prev.map((m) =>
+                  (m._id && m._id === msg._id) || (m.localId && m.localId === msg.localId)
+                    ? { ...m, message: 'This message was deleted', deleted: true }
+                    : m
+                )
+              );
+              if(msg._id){
+                await api.delete(`/chats/rides/${rideId}/message/${msg._id}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+              }
+            
+
+            } catch (err) {
+              console.error('Error deleting message:', err);
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   const renderItem = ({ item }) => {
     const isSelf = item.sender?.toString() === currentUserIdRef.current?.toString();
+    const replyText=item.replyToContent || '[This message was deleted]';
     return (
-      <View
+      <TouchableOpacity
+        onLongPress={() => deleteMessage(item)}
+        onPress={() => !isSelf &&  setReplyingTo(item)}
+      >
+
+        <View
         style={[
           styles.messageContainer,
           isSelf ? styles.selfMessage : styles.otherMessage,
         ]}
-      >
-        <Text
-          style={[
-            styles.messageText,
-            isSelf ? { color: '#fff' } : { color: '#000' },
-          ]}
         >
-          {item.message}
-        </Text>
-        <Text style={[styles.timestamp,
-          isSelf?{color:"#fff"}:{color:'#555'},
-        ]}>
-          {item.createdAt
-          ? new Date(item.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-          : ""}
-        </Text>
-      </View>
+          {item.replyTo &&  (
+            <View style={styles.replyContainer}>
+              <Text style={styles.replyText}>
+                Replying to: {replyText}
+              </Text>
+            </View>
+          )}
+
+          <Text
+            style={[
+              
+              item.deleted
+              ? styles.deletedText : styles.messageText,
+              {
+                 color:item.sender===currentUserIdRef.current
+                ?"white":"black"
+              },
+            ]}
+          >
+            {item.deleted?"This message was deleted":item.message}
+          </Text>
+          <Text style={[styles.timestamp,
+            isSelf?{color:"#fff"}:{color:'#555'},
+          ]}>
+            {item.createdAt
+            ? new Date(item.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+            : ""}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      
     );
   };
 
@@ -172,6 +253,16 @@ const ChatScreen = ({ route }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.container}>
+
+        {/* Back Arrow */}
+        
+          <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={tw`absolute top-4 left-2 z-10 bg-white rounded-full p-2 shadow `}
+        >
+          <Ionicons name="arrow-back" size={24} color="#1e293b" />
+        </TouchableOpacity>
+        
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -190,7 +281,17 @@ const ChatScreen = ({ route }) => {
           onLayout={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
           }
+          style={{marginTop:50}}
         />
+
+        {replyingTo && (
+          <View style={styles.replyBanner}>
+            <Text>Replying to: {replyingTo.message}</Text>
+            <TouchableOpacity onPress={() => setReplyingTo(null)}>
+              <Text style={{ color: 'red', fontWeight:'bold',marginRight: 10,  }}>X</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.inputRow}>
           <TextInput
@@ -212,7 +313,10 @@ export default ChatScreen;
 
 // Styles
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f9f9f9' 
+  },
   messageContainer: {
     maxWidth: '70%',
     padding: 10,
@@ -258,4 +362,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  replyBanner: { 
+    flexDirection: 'row', 
+    padding: 5, 
+    backgroundColor: '#ddd', 
+    alignItems: 'center', 
+    borderRadius:10,
+    marginBottom:5,
+    justifyContent:'space-between',
+    alignItems:'center',
+    borderLeftWidth:4,
+    borderLeftColor: '#007AFF', 
+    marginHorizontal: 10, 
+    
+  },
+  replyContainer: { 
+    padding: 5, 
+    backgroundColor: '#ccc', 
+    borderLeftWidth: 3, 
+    borderLeftColor: '#007AFF', 
+    marginBottom: 3 
+  },
+  replyText: { 
+    fontSize: 12, 
+    fontStyle: 'italic' 
+  },
+  deletedText: {
+  fontStyle: "italic",
+  fontSize: 16,
+  },
+
 });
