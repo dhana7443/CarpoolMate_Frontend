@@ -146,38 +146,7 @@ const RideRequestsScreen = () => {
                     {new Date(req.requested_at).toLocaleString()}
                   </Text>
               </Text>
-              {/* {req.status === 'Pending' && (
-                <View style={tw`flex-row justify-between mt-3`}>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: '#28a745' }]}
-                    onPress={() => handleAction(req.request_id, 'Accepted')}
-                  >
-                    <Text style={styles.btnText}>Accept</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: '#dc3545' }]}
-                    onPress={() => handleAction(req.request_id, 'Rejected')}
-                  >
-                    <Text style={styles.btnText}>Reject</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {req.status === 'Accepted' && (
-                <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: '#2563eb' }]}
-                  onPress={() =>
-                    navigation.navigate('ChatScreen', {
-                      rideId: req.ride_id,
-                      requestId: req.request_id,
-                      riderId: req.rider_id
-                    })
-                  }
-                >
-                  <Text style={styles.btnText}>Chat</Text>
-                </TouchableOpacity>
-              )} */}
-
+              
               <View >
                 {req.status === 'Pending' ? (
                   <View style={tw`flex-row justify-between mt-3`}>
@@ -202,7 +171,7 @@ const RideRequestsScreen = () => {
                       navigation.navigate('chat', {
                         rideId: rideRequests.ride_id,
                         requestId: req.request_id,
-                        riderId: req.rider.id
+                        otherUserId: req.rider.id
                       })
                     }
                     >

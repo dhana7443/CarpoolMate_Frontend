@@ -20,275 +20,235 @@ import api from '../src/api/axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import tw from 'twrnc';
 
-const ChatScreen = ({ route }) => {
-  const { rideId } = route.params;
+const ChatScreen = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { rideId, otherUserId } = route.params;
+
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [replyingTo,setReplyingTo]=useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
+
   const socketRef = useRef(null);
   const flatListRef = useRef();
   const currentUserIdRef = useRef(null);
-  const navigation=useNavigation();
 
+  // Helper: Always extract string ID from sender object or string
+  const getSenderId = (sender) => {
+    if (!sender) return null;
+    if (typeof sender === 'string') return sender;
+    if (sender._id) return sender._id.toString();
+    return null;
+  };
 
-  // Fetch old messages once
+  // Helper: Normalize message
+  const normalizeMessage = (msg, allMessages = []) => ({
+    ...msg,
+    sender_id: getSenderId(msg.sender_id || msg.sender),
+    replyTo: msg.reply_to || null,
+    replyToContent:
+      msg.reply_to?.message ||
+      allMessages.find((m) => m._id === (msg.reply_to || msg.replyTo?._id))?.message ||
+      null,
+    createdAt: msg.createdAt || new Date().toISOString(),
+  });
+
+  // Setup conversation and fetch old messages
   useEffect(() => {
-    const fetchMessages = async () => {
+    const setupConversation = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        const res = await api.get(`/chats/rides/${rideId}/messages`, {
-          headers: { Authorization: `Bearer ${token}` },
+        if (!token) return;
+
+        const decodedToken = parseJwt(token);
+        currentUserIdRef.current = decodedToken.user_id.toString();
+
+        // 1. Create or fetch conversation
+        const res = await api.post(
+          `/chats/private`,
+          { rideId, recipientId: otherUserId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const convId = res.data.conversationId;
+        setConversationId(convId);
+
+        // 2. Fetch messages for this conversation
+        const messagesRes = await api.get(
+          `/chats/conversation/${convId}/messages`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const normalized = messagesRes.data.map((m) => normalizeMessage(m, messagesRes.data));
+        setMessages(normalized);
+
+        // 3. Setup socket connection
+        const socket = io('http://127.0.0.1:3000', {
+          auth: { token },
+          transports: ['websocket'],
         });
 
-        // Normalize sender IDs to string for comparison
-        const normalized = res.data.map((m) => ({
-          ...m,
-          sender: m.sender_id?.toString(),
-          replyTo:m.reply_to,
-          replyToContent:res.data.find(r => r._id === m.reply_to)?.message || null
-        }));
+        socket.on('connect', () => {
+          console.log('Socket connected:', socket.id);
+          socket.emit('joinConversation', { rideId, otherUserId });
+        });
 
-        setMessages(normalized);
+        socket.on('receiveMessage', (msg) => {
+          const normalizedMsg = normalizeMessage(msg);
+
+          setMessages((prev) => {
+            const index = prev.findIndex(
+              (m) =>
+                (m._id && normalizedMsg._id && m._id === normalizedMsg._id) ||
+                (m.localId && normalizedMsg.localId && m.localId === normalizedMsg.localId)
+            );
+
+            if (index !== -1) {
+              const updated = [...prev];
+              updated[index] = { ...updated[index], ...normalizedMsg };
+              return updated;
+            }
+
+            const updated = [...prev, normalizedMsg];
+            updated.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            return updated;
+          });
+        });
+
+        socket.on('chatError', (err) => console.log('Socket error:', err));
+        socketRef.current = socket;
+
       } catch (err) {
-        console.error('Error fetching messages:', err);
+        console.error('Error setting up conversation:', err);
+        Alert.alert('Error', 'Unable to initialize chat');
       }
     };
-    fetchMessages();
-  }, [rideId]);
 
-  // Socket setup
-  useEffect(() => {
-    const setupSocket = async () => {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
-
-      const decodedToken = parseJwt(token);
-      currentUserIdRef.current = decodedToken.user_id.toString();
-
-      const newSocket = io('http://127.0.0.1:3000', {
-        auth: { token },
-        transports: ['websocket'],
-      });
-
-      newSocket.on('connect', () => {
-        console.log('Connected to socket', newSocket.id);
-        newSocket.emit('joinRoom', rideId);
-      });
-
-
-      // Receive new messages
-      newSocket.on('receiveMessage', (msg) => {
-        const normalizedMsg = {
-          ...msg,
-          sender: msg.sender?.toString(),
-          createdAt: msg.createdAt || new Date().toISOString(),
-          replyTo: msg.replyTo?._id || null,
-          replyToContent: msg.replyTo?.message || null
-        };
-
-        setMessages((prev) => {
-          const index = prev.findIndex(
-            (m) =>
-              (m._id && normalizedMsg._id && m._id === normalizedMsg._id) ||
-              (m.localId && normalizedMsg.localId && m.localId === normalizedMsg.localId)
-          );
-
-          if (index !== -1) {
-            //  Update existing message (important for delete state sync)
-            const updated = [...prev];
-            updated[index] = { ...updated[index], ...normalizedMsg };
-            return updated;
-          }
-
-          //  Otherwise add as new
-          const updated = [...prev, normalizedMsg];
-          updated.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          return updated;
-        });
-      });
-
-      newSocket.on('error', (err) => {
-        console.log('Socket error:', err);
-      });
-
-      socketRef.current = newSocket;
-    };
-
-    setupSocket();
+    setupConversation();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.emit('leaveRoom', rideId);
-        socketRef.current.disconnect();
+      if (socketRef.current && conversationId) {
+        socketRef.current.emit('leaveRoom', conversationId);
         socketRef.current.disconnect();
       }
     };
-  }, [rideId]);
+  }, [rideId, otherUserId]);
 
+  // Send message
   const sendMessage = () => {
-    if (!inputMessage.trim() || !socketRef.current) return;
+    if (!inputMessage.trim() || !socketRef.current || !conversationId) return;
 
-    const localId=Date.now().toString();
-
+    const localId = Date.now().toString();
     const localMsg = {
-      localId, // temporary unique id
-      sender: currentUserIdRef.current,
+      localId,
+      sender_id: currentUserIdRef.current,
       message: inputMessage,
       createdAt: new Date().toISOString(),
-      pending:true,
-      replyTo:replyingTo?._id || null
+      pending: true,
+      replyTo: replyingTo?._id || null,
     };
 
-    console.log(localMsg.timestamp);
-    // Optimistic UI update
     setMessages((prev) => [...prev, localMsg]);
 
-    // Emit to server
     socketRef.current.emit('sendMessage', {
-      rideId,
-      senderId:currentUserIdRef.current,
+      conversationId,
       message: inputMessage,
-      replyTo:localMsg.replyTo,
-      createdAt: localMsg.createdAt,
-      localId
+      localId,
+      replyTo: localMsg.replyTo,
+      otherUserId,
     });
 
     setInputMessage('');
     setReplyingTo(null);
   };
 
+  // Delete message
   const deleteMessage = async (msg) => {
-    if(!msg._id && !msg.localId) return;
-    if (msg.sender !== currentUserIdRef.current) return;
+    if (!msg._id && !msg.localId) return;
+    if (msg.sender_id !== currentUserIdRef.current) return;
 
-    const token=await AsyncStorage.getItem('userToken');
-    Alert.alert(
-      'Delete Message',
-      'Are you sure you want to delete this message?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete', style: 'destructive', onPress: async () => {
-            try {
+    const token = await AsyncStorage.getItem('userToken');
+    Alert.alert('Delete Message', 'Are you sure you want to delete this message?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setMessages((prev) =>
+              prev.map((m) =>
+                (m._id && m._id === msg._id) || (m.localId && m.localId === msg.localId)
+                  ? { ...m, message: 'This message was deleted', deleted: true }
+                  : m
+              )
+            );
 
-              setMessages((prev) =>
-                prev.map((m) =>
-                  (m._id && m._id === msg._id) || (m.localId && m.localId === msg.localId)
-                    ? { ...m, message: 'This message was deleted', deleted: true }
-                    : m
-                )
-              );
-              if(msg._id){
-                await api.delete(`/chats/rides/${rideId}/message/${msg._id}`, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-              }
-            
-
-            } catch (err) {
-              console.error('Error deleting message:', err);
+            if (msg._id) {
+              await api.delete(`/chats/message/${msg._id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
             }
+          } catch (err) {
+            console.error('Error deleting message:', err);
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
-
   const renderItem = ({ item }) => {
-    const isSelf = item.sender?.toString() === currentUserIdRef.current?.toString();
-    const replyText=item.replyToContent || '[This message was deleted]';
+    const isSelf = item.sender_id === currentUserIdRef.current;
+    const replyText = item.replyToContent || '[This message was deleted]';
+
     return (
       <TouchableOpacity
         onLongPress={() => deleteMessage(item)}
-        onPress={() => !isSelf &&  setReplyingTo(item)}
+        onPress={() => !isSelf && setReplyingTo(item)}
       >
-
-        <View
-        style={[
-          styles.messageContainer,
-          isSelf ? styles.selfMessage : styles.otherMessage,
-        ]}
-        >
-          {item.replyTo &&  (
+        <View style={[styles.messageContainer, isSelf ? styles.selfMessage : styles.otherMessage]}>
+          {item.replyTo && (
             <View style={styles.replyContainer}>
-              <Text style={styles.replyText}>
-                Replying to: {replyText}
-              </Text>
+              <Text style={styles.replyText}>Replying to: {replyText}</Text>
             </View>
           )}
-
-          <Text
-            style={[
-              
-              item.deleted
-              ? styles.deletedText : styles.messageText,
-              {
-                 color:item.sender===currentUserIdRef.current
-                ?"white":"black"
-              },
-            ]}
-          >
-            {item.deleted?"This message was deleted":item.message}
+          <Text style={[item.deleted ? styles.deletedText : styles.messageText, { color: isSelf ? 'white' : 'black' }]}>
+            {item.deleted ? 'This message was deleted' : item.message}
           </Text>
-          <Text style={[styles.timestamp,
-            isSelf?{color:"#fff"}:{color:'#555'},
-          ]}>
-            {item.createdAt
-            ? new Date(item.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-            : ""}
+          <Text style={[styles.timestamp, { color: isSelf ? '#fff' : '#555' }]}>
+            {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
           </Text>
         </View>
       </TouchableOpacity>
-      
     );
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.container}>
-
-        {/* Back Arrow */}
-        
-          <TouchableOpacity
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={tw`absolute top-4 left-2 z-10 bg-white rounded-full p-2 shadow `}
+          style={tw`absolute top-4 left-2 z-10 bg-white rounded-full p-2 shadow`}
         >
           <Ionicons name="arrow-back" size={24} color="#1e293b" />
         </TouchableOpacity>
-        
+
         <FlatList
           ref={flatListRef}
           data={messages}
-          keyExtractor={(item, index) =>
-            item._id
-              ? item._id
-              : item.localId
-              ? `${item.localId}`
-              : `${index}`
-          }
+          keyExtractor={(item, index) => (item._id ? item._id : item.localId ? `${item.localId}` : `${index}`)}
           renderItem={renderItem}
           contentContainerStyle={{ paddingVertical: 10 }}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: true })
-          }
-          onLayout={() =>
-            flatListRef.current?.scrollToEnd({ animated: true })
-          }
-          style={{marginTop:50}}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          style={{ marginTop: 50 }}
         />
 
         {replyingTo && (
           <View style={styles.replyBanner}>
             <Text>Replying to: {replyingTo.message}</Text>
             <TouchableOpacity onPress={() => setReplyingTo(null)}>
-              <Text style={{ color: 'red', fontWeight:'bold',marginRight: 10,  }}>X</Text>
+              <Text style={{ color: 'red', fontWeight: 'bold', marginRight: 10 }}>X</Text>
             </TouchableOpacity>
           </View>
         )}

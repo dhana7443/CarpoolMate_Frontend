@@ -86,8 +86,24 @@ const BookingRequestsScreen = () => {
     fetchRequests().finally(() => setRefreshing(false));
   };
 
-  const handleChat=({rideId,requestId,riderId})=>{
-    navigation.navigate('chat',{rideId,requestId,riderId});
+  const handleChat=async({rideId,requestId,riderId})=>{
+    try {
+    const token = await AsyncStorage.getItem("userToken");
+    const res = await api.get(`/rides/${rideId}/info`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const driverId = res.data.driverId;
+    console.log("driverId:",driverId);
+    navigation.navigate("chat", {
+      rideId,
+      requestId,
+      otherUserId: driverId, // driver is the other user
+    });
+  } catch (err) {
+    console.error("Error fetching ride info:", err);
+    Alert.alert("Error", "Unable to fetch ride info for chat");
+  }
   }
   return (
     <View style={styles.container}> 
