@@ -69,6 +69,20 @@ const SendPaymentScreen = ({ route, navigation }) => {
         type: 'success',
         text1: 'Payment sent successfully!',
       });
+
+      //2.fetch driver info using requestId
+      const { data: driverInfo } = await api.get(
+        `/rides/driver-info/${requestId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      navigation.replace('Review', {
+        rideId: driverInfo.ride_id,
+        driverId: driverInfo.driver_id,
+        driverName: driverInfo.driver_name,
+      });
     } catch (err) {
       console.error('Error sending payment:', err);
       Toast.show({

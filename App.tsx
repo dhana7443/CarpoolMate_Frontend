@@ -189,84 +189,12 @@ import SendPaymentScreen from './screens/paymentsScreen';
 import WalletScreen from './screens/walletSCreen';
 import EditRideScreen from './screens/EditRideScreen';
 import ChatScreen from './screens/ChatScreen';
+import ReviewScreen from './screens/ReviewScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  // useEffect(() => {
-  //   const setupNotifications = async () => {
-  //     try {
-  //       await notifee.createChannel({
-  //         id: 'default',
-  //         name: 'Default Channel',
-  //         importance: AndroidImportance.HIGH,
-  //       });
-
-  //       const authStatus = await messaging().requestPermission();
-  //       const enabled =
-  //         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-  //         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-  //       console.log('Notification permission status:', authStatus);
-
-  //       if (Platform.OS === 'android' && Platform.Version >= 33) {
-  //         const granted = await PermissionsAndroid.request(
-  //           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-  //         );
-  //         console.log('POST_NOTIFICATIONS permission:', granted);
-  //       }
-
-  //       // setupNotifications();
-
-  //       const fcmToken = await messaging().getToken();
-  //       console.log('FCM Token:', fcmToken);
-
-  //       const authToken = await AsyncStorage.getItem('userToken');
-  //       if (authToken && fcmToken) {
-  //         const res = await api.post(
-  //           '/users/store-fcm-token',
-  //           { fcmToken },
-  //           { headers: { Authorization: `Bearer ${authToken}` } }
-  //         );
-  //         console.log('FCM token stored:', res.data);
-  //       } else {
-  //         console.log('No auth token, skipping token upload.');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error setting up notifications:', error);
-  //     }
-  //   };
-
-  //   setupNotifications();
-
-  //   const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
-  //     console.log('Foreground notification received:', JSON.stringify(remoteMessage));
-  //     await notifee.displayNotification({
-  //       title: remoteMessage.notification?.title || 'CarpoolMate',
-  //       body: remoteMessage.notification?.body || 'You have a new update.',
-  //       android: { channelId: 'default' },
-  //     });
-  //   });
-
-  //   messaging().setBackgroundMessageHandler(async remoteMessage => {
-  //     console.log('Background notification received:', JSON.stringify(remoteMessage));
-  //   });
-
-  //   const unsubscribeOpenedApp = messaging().onNotificationOpenedApp(remoteMessage => {
-  //     console.log('Notification opened from background:', JSON.stringify(remoteMessage));
-  //   });
-
-  //   messaging().getInitialNotification().then(remoteMessage => {
-  //     if (remoteMessage) {
-  //       console.log('Notification opened from quit state:', JSON.stringify(remoteMessage));
-  //     }
-  //   });
-
-  //   return () => {
-  //     unsubscribeForeground();
-  //     unsubscribeOpenedApp();
-  //   };
-  // }, []);
-  // inside your App component:
+  
 useEffect(() => {
   const setupNotifications = async () => {
     await notifee.createChannel({
@@ -357,7 +285,8 @@ useEffect(() => {
             <Stack.Screen name="Wallet" component={WalletScreen}/>
             <Stack.Screen name="EditRide" component={EditRideScreen}/>
             <Stack.Screen name="chat" component={ChatScreen}/>
-
+            <Stack.Screen name="review" component={ReviewScreen}/>
+            
           </Stack.Navigator>
         </NavigationContainer>
         <Toast />
