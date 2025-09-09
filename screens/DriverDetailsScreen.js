@@ -16,7 +16,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 const DriverDetailsScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-
   const basicData = route.params?.basicData || {};
 
   const [data, setData] = useState({
@@ -31,30 +30,14 @@ const DriverDetailsScreen = () => {
 
   const handleInputChange = (field, value) => {
     setData(prev => ({ ...prev, [field]: value }));
-    if (touched[field]) {
-      validateField(field, value);
-    }
+    if (touched[field]) validateField(field, value);
   };
 
   const validateField = (field, value) => {
     let error = '';
-
-    if (!value) {
-      error = 'This field is required';
-    } else {
-      if (field === 'experience' && !/^\d+$/.test(value)) {
-        error = 'Experience must be a number';
-      }
-    }
-
+    if (!value) error = 'This field is required';
+    else if (field === 'experience' && !/^\d+$/.test(value)) error = 'Experience must be a number';
     setErrors(prev => ({ ...prev, [field]: error }));
-  };
-
-  const validateAllFields = () => {
-    Object.keys(data).forEach(field => {
-      setTouched(prev => ({ ...prev, [field]: true }));
-      validateField(field, data[field]);
-    });
   };
 
   const isFormValid = () => {
@@ -62,7 +45,13 @@ const DriverDetailsScreen = () => {
   };
 
   const handleSubmit = async () => {
-    validateAllFields();
+    // mark all fields as touched
+    const updatedTouched = {};
+    Object.keys(data).forEach(field => {
+      updatedTouched[field] = true;
+      validateField(field, data[field]);
+    });
+    setTouched(updatedTouched);
 
     if (!isFormValid()) {
       Alert.alert('Invalid Form', 'Please correct the highlighted errors.');
@@ -146,15 +135,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
-    
   },
   content: {
-    marginTop:30,
+    marginTop: 30,
     padding: 24,
-    
   },
   heading: {
-    marginLeft:10,
+    marginLeft: 10,
     fontSize: 24,
     fontWeight: 'bold',
     color: '#E2E8F0',
@@ -162,10 +149,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   subheading: {
-    marginLeft:10,
+    marginLeft: 10,
     fontSize: 16,
     color: '#CBD5E1',
-    textAlign: 'eft',
+    textAlign: 'left',
     marginBottom: 30,
   },
   card: {

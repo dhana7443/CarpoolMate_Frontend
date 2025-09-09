@@ -1,28 +1,40 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, Alert ,StyleSheet,SafeAreaView,ScrollView,TouchableOpacity} from 'react-native';
+import { View, TextInput, Text, Alert, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import api from '../src/api/axios';
-import Icon from 'react-native-vector-icons/Ionicons';
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false); // track if input was focused and blurred
+
+  const validateEmail = (email) => {
+    if (!email) return 'This field is required.';
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(email)) return 'Invalid email format.';
+    return '';
+  };
 
   const handleSendOtp = async () => {
-    if (!email) {
-        Alert.alert('Validation Error', 'Email is required.');
-        return;
-      }
+    const validationError = validateEmail(email);
+    if (validationError) {
+      setError(validationError);
+      setTouched(true);
+      return;
+    } else {
+      setError('');
+    }
 
     try {
-      await api.post('/users/forgot-password', { email });
+      const res = await api.post('/users/forgot-password', { email });
+      const { expiresIn } = res.data;
       Alert.alert('OTP sent', 'Please check your email for the OTP.');
-      navigation.navigate('VerifyOtp', { email });
+      navigation.navigate('VerifyOtp', { email, expiresIn });
     } catch (err) {
       Alert.alert('Error', err.response?.data?.message || err.message);
     }
   };
 
   return (
-    
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Forgot Password</Text>
@@ -32,16 +44,24 @@ const ForgotPasswordScreen = ({ navigation }) => {
           <TextInput
             placeholder="Email"
             placeholderTextColor="#999"
-            style={styles.input}
+            style={[styles.input, error && touched ? styles.inputError : null]}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (touched) setError(validateEmail(text)); // live validation after blur
+            }}
+            onFocus={() => setTouched(false)} // reset error on focus
+            onBlur={() => {
+              setTouched(true);
+              setError(validateEmail(email));
+            }}
           />
+          {error && touched ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TouchableOpacity style={styles.ctaButton} onPress={handleSendOtp}>
             <Text style={styles.ctaText}>Send OTP</Text>
-            {/* <Icon name="mail-outline" size={22} color="#fff" style={styles.ctaIcon} /> */}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -51,37 +71,19 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
 export default ForgotPasswordScreen;
 
-// const PRIMARY = '#5A67D8';
-const PRIMARY='#1e40af';
+const PRIMARY = '#1e40af';
 const SCREEN_BG = '#0F172A';
 const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';
 const DARK_TEXT = '#E2E8F0';
 const MUTED_TEXT = '#CBD5E1';
+const ERROR_COLOR = '#f87171';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: SCREEN_BG,
-  },
-  content: {
-    marginTop:50,
-    padding: 24,
-    justifyContent: 'center',
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: DARK_TEXT,
-    textAlign: 'left',
-    marginBottom: 6,
-  },
-  subheading: {
-    fontSize: 14,
-    color: MUTED_TEXT,
-    textAlign: 'left',
-    marginBottom: 30,
-  },
+  container: { flex: 1, backgroundColor: SCREEN_BG },
+  content: { marginTop: 50, padding: 24, justifyContent: 'center' },
+  heading: { fontSize: 20, fontWeight: 'bold', color: DARK_TEXT, marginBottom: 6 },
+  subheading: { fontSize: 14, color: MUTED_TEXT, marginBottom: 30 },
   card: {
     backgroundColor: '#fff',
     padding: 24,
@@ -104,7 +106,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 15,
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 4,
+  },
+  inputError: {
+    borderColor: ERROR_COLOR,
+  },
+  errorText: {
+    color: ERROR_COLOR,
+    fontSize: 12,
+    marginBottom: 8,
   },
   ctaButton: {
     backgroundColor: PRIMARY,
@@ -115,13 +125,5 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginTop: 10,
   },
-  ctaText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  ctaIcon: {
-    marginTop: 1,
-  },
+  ctaText: { color: '#fff', fontSize: 16, fontWeight: '600', marginRight: 8 },
 });

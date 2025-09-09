@@ -72,13 +72,14 @@ const SendPaymentScreen = ({ route, navigation }) => {
 
       //2.fetch driver info using requestId
       const { data: driverInfo } = await api.get(
-        `/rides/driver-info/${requestId}`,
+        `/ride-requests/driver-info/${requestId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      navigation.replace('Review', {
+      console.log("driverinfo",driverInfo)
+      navigation.replace('review', {
         rideId: driverInfo.ride_id,
         driverId: driverInfo.driver_id,
         driverName: driverInfo.driver_name,

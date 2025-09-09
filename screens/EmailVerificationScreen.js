@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../src/api/axios';
 import {
   View,
@@ -10,38 +10,50 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
 const EmailVerificationScreen = () => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [errors, setErrors] = useState({ email: '', otp: '' });
+  const [touched, setTouched] = useState({ email: false, otp: false });
   const [timer, setTimer] = useState(120);
   const navigation = useNavigation();
+  const RESEND_INTERVAL = 120;
 
-  const RESEND_INTERVAL=120;
   useEffect(() => {
     let countdown;
     if (timer > 0) {
-      countdown = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
+      countdown = setInterval(() => setTimer((prev) => prev - 1), 1000);
     }
     return () => clearInterval(countdown);
   }, [timer]);
 
+  const validateEmail = (value) => {
+    if (!value) return 'This field is required.';
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(value)) return 'Invalid email format.';
+    return '';
+  };
+
+  const validateOtp = (value) => {
+    if (!value) return 'OTP is required.';
+    if (!/^\d+$/.test(value)) return 'OTP must be numeric.';
+    if (value.length !== 6) return 'OTP must be 6 digits.';
+    return '';
+  };
+
   const handleVerify = async () => {
-    if (!email || !otp) {
-      Alert.alert('Validation Error', 'Email and OTP are required.');
+    const emailError = validateEmail(email);
+    const otpError = validateOtp(otp);
+    if (emailError || otpError) {
+      setErrors({ email: emailError, otp: otpError });
+      setTouched({ email: true, otp: true });
       return;
     }
 
     try {
-      const response = await api.post('/users/verify-otp', {
-        email,
-        otp,
-      });
-
+      await api.post('/users/verify-otp', { email, otp });
       Alert.alert('Success', 'Email verified successfully!');
       navigation.navigate('Login');
     } catch (error) {
@@ -50,10 +62,11 @@ const EmailVerificationScreen = () => {
     }
   };
 
-
   const handleResendOtp = async () => {
-    if (!email) {
-      Alert.alert('Missing Email', 'Please enter your email to resend OTP.');
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setErrors({ ...errors, email: emailError });
+      setTouched({ ...touched, email: true });
       return;
     }
 
@@ -67,6 +80,8 @@ const EmailVerificationScreen = () => {
     }
   };
 
+  const isFormValid = () => !validateEmail(email) && !validateOtp(otp);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -79,37 +94,46 @@ const EmailVerificationScreen = () => {
           <TextInput
             placeholder="Email"
             placeholderTextColor="#999"
-            style={styles.input}
+            style={[styles.input, errors.email && touched.email ? styles.inputError : null]}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (touched.email) setErrors({ ...errors, email: validateEmail(text) });
+            }}
+            onFocus={() => setTouched({ ...touched, email: false })}
+            onBlur={() => setTouched({ ...touched, email: true }) || setErrors({ ...errors, email: validateEmail(email) })}
           />
+          {errors.email && touched.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
           <TextInput
             placeholder="OTP"
             placeholderTextColor="#999"
-            style={styles.input}
+            style={[styles.input, errors.otp && touched.otp ? styles.inputError : null]}
             keyboardType="number-pad"
+            maxLength={6}
             value={otp}
-            onChangeText={setOtp}
+            onChangeText={(text) => {
+              setOtp(text);
+              if (touched.otp) setErrors({ ...errors, otp: validateOtp(text) });
+            }}
+            onFocus={() => setTouched({ ...touched, otp: false })}
+            onBlur={() => setTouched({ ...touched, otp: true }) || setErrors({ ...errors, otp: validateOtp(otp) })}
           />
+          {errors.otp && touched.otp && <Text style={styles.errorText}>{errors.otp}</Text>}
 
-          <TouchableOpacity style={styles.ctaButton} onPress={handleVerify}>
+          <TouchableOpacity
+            style={[styles.ctaButton, !isFormValid() ? styles.ctaButtonDisabled : null]}
+            onPress={handleVerify}
+            disabled={!isFormValid()}
+          >
             <Text style={styles.ctaText}>Verify</Text>
-            {/* <Icon
-              name="checkmark-done-circle-outline"
-              size={22}
-              color="#fff"
-              style={styles.ctaIcon}
-            /> */}
           </TouchableOpacity>
 
-          {/* Resend OTP Section */}
           <View style={styles.resendContainer}>
             {timer > 0 ? (
-              <Text style={styles.timerText}>
-                Resend OTP in {timer} seconds
-              </Text>
+              <Text style={styles.timerText}>Resend OTP in {timer} seconds</Text>
             ) : (
               <TouchableOpacity onPress={handleResendOtp}>
                 <Text style={styles.resendText}>Resend OTP</Text>
@@ -130,30 +154,13 @@ const INPUT_BG = '#FFFFFF';
 const BORDER_DEFAULT = '#D1D5DB';
 const DARK_TEXT = '#E2E8F0';
 const MUTED_TEXT = '#CBD5E1';
+const ERROR_COLOR = '#f87171';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: SCREEN_BG,
-  },
-  content: {
-    padding: 24,
-    justifyContent: 'center',
-    marginTop:30,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: DARK_TEXT,
-    textAlign: 'left',
-    marginBottom: 6,
-  },
-  subheading: {
-    fontSize: 14,
-    color: MUTED_TEXT,
-    textAlign: 'left',
-    marginBottom: 30,
-  },
+  container: { flex: 1, backgroundColor: SCREEN_BG },
+  content: { padding: 24, justifyContent: 'center', marginTop: 30 },
+  heading: { fontSize: 20, fontWeight: 'bold', color: DARK_TEXT, marginBottom: 6 },
+  subheading: { fontSize: 14, color: MUTED_TEXT, marginBottom: 30 },
   card: {
     backgroundColor: '#fff',
     padding: 24,
@@ -176,8 +183,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 15,
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 4,
   },
+  // inputError: { borderColor: ERROR_COLOR },
+  errorText: { color: ERROR_COLOR, fontSize: 12, marginBottom: 8 },
   ctaButton: {
     backgroundColor: PRIMARY,
     flexDirection: 'row',
@@ -187,26 +196,9 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginTop: 10,
   },
-  ctaText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  ctaIcon: {
-    marginTop: 1,
-  },
-  resendContainer: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  timerText: {
-    color: '#6B7280',
-    fontSize: 14,
-  },
-  resendText: {
-    color: PRIMARY,
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  ctaButtonDisabled: { backgroundColor: '#5a78e0' },
+  ctaText: { color: '#fff', fontSize: 16, fontWeight: '600', marginRight: 8 },
+  resendContainer: { marginTop: 16, alignItems: 'center' },
+  timerText: { color: '#6B7280', fontSize: 14 },
+  resendText: { color: PRIMARY, fontWeight: '600', fontSize: 14 },
 });

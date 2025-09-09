@@ -13,6 +13,8 @@ const WalletScreen = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [amount, setAmount] = useState('');
+  const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   const navigation=useNavigation();
 
@@ -59,7 +61,7 @@ const WalletScreen = () => {
         type: 'success',
         text1: 'Money added successfully!',
       });
-      
+      setTouched(false);
     } catch (err) {
       console.error('Error adding money:', err);
       Toast.show({
@@ -68,6 +70,21 @@ const WalletScreen = () => {
       });
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleBlur=() => {
+    setTouched(true);
+    if (!amount) setError('This field is required');
+  }
+
+  const handleChange = (text) => {
+    // Allow only numeric input
+    if (/^\d*\.?\d*$/.test(text)) {
+      setAmount(text);
+      if (text && parseFloat(text) > 0) setError('');
+    } else {
+      setError('Only numeric values allowed');
     }
   };
 
@@ -82,6 +99,8 @@ const WalletScreen = () => {
       </View>
     );
   }
+
+  const isButtonDisabled = !amount || parseFloat(amount)<=0 || adding;
 
   return (
     <View style={styles.container}>
@@ -101,19 +120,21 @@ const WalletScreen = () => {
         </Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, error ? { borderColor: 'red' } : null]}
           placeholder="Enter amount to add"
           keyboardType="numeric"
           value={amount}
-          onChangeText={setAmount}
+          onChangeText={handleChange}
+          onBlur={handleBlur}
         />
+        {error && touched && <Text style={styles.errorText}>{error}</Text>}
 
-        <TouchableOpacity style={styles.button} onPress={handleAddMoney} disabled={adding}>
-          {adding ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Add Money</Text>
-          )}
+        <TouchableOpacity
+          style={[styles.button, isButtonDisabled && { backgroundColor: '#94a3b8' }]}
+          onPress={handleAddMoney}
+          disabled={isButtonDisabled}
+        >
+          {adding ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Add Money</Text>}
         </TouchableOpacity>
       </View>
       <Toast />
@@ -185,5 +206,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { 
+    color: '#fff', 
+    fontSize: 16, 
+    fontWeight: '600' 
+  },
+  errorText: { 
+    color: 'red', 
+    fontSize: 12, 
+    marginBottom: 8 
+  },
 });

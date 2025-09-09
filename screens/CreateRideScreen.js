@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../src/api/axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Header from '../components/headerItem';
-
+import { parseJwt } from '../utils/jwt';
 
 const CreateRideScreen = () => {
 
@@ -89,6 +89,15 @@ const CreateRideScreen = () => {
     }
   };
 
+  const isFormValid = 
+    selectedFrom && 
+    selectedTo && 
+    departureTime && 
+    availableSeats.trim() !== '' &&
+    !isNaN(availableSeats) &&        
+    parseInt(availableSeats) > 0;    
+
+
   const onCreateRide = async () => {
     if (!selectedFrom || !selectedTo || !availableSeats || !departureTime) {
       Toast.show({ type: 'error', text1: 'All fields are required' });
@@ -116,10 +125,23 @@ const CreateRideScreen = () => {
       );
 
       Toast.show({ type: 'success', text1: 'Ride created successfully!' });
-      await AsyncStorage.setItem('ride_id', response.data.ride.ride_id);
-      const ride_id=await AsyncStorage.getItem("ride_id");
-      console.log(response.data.ride.ride_id);
-      console.log(ride_id);
+      
+      //get user id from token
+      const decoded = token ? parseJwt(token) : null;
+      const userId = decoded?.user_id;
+
+      if (userId) {
+        await AsyncStorage.setItem(`ride_id_${userId}`, response.data.ride.ride_id);
+        const ride_id = await AsyncStorage.getItem(`ride_id_${userId}`);
+        console.log('Ride ID stored for user:', userId, ride_id);
+      } else {
+        // fallback if token missing
+        await AsyncStorage.setItem('ride_id', response.data.ride.ride_id);
+        const ride_id = await AsyncStorage.getItem('ride_id');
+        console.log('Ride ID stored (fallback):', ride_id);
+      }
+
+      // Reset form
       setSelectedFrom(null);
       setSelectedTo(null);
       setToStops([]);
@@ -143,7 +165,7 @@ const CreateRideScreen = () => {
 
       <View style={styles.card}>
         {/* FROM Picker */}
-        {/* <Text style={styles.label}>From</Text> */}
+        
         <View style={styles.input}>
           <Picker
             selectedValue={selectedFrom ? selectedFrom._id : ''}
@@ -160,7 +182,7 @@ const CreateRideScreen = () => {
         </View>
 
         {/* TO Picker */}
-        {/* <Text style={styles.label}>To</Text> */}
+        
         <View style={styles.input}>
           <Picker
             selectedValue={selectedTo ? selectedTo._id : ''}
@@ -177,7 +199,6 @@ const CreateRideScreen = () => {
         </View>
 
         {/* Departure Picker */}
-        {/* <Text style={styles.label}>Departure Time</Text> */}
         
         <TouchableOpacity style={[styles.input, styles.departureTime]} onPress={() => setShowDatePicker(true)}>
           <Ionicons name="calendar-outline" size={20} color="#1F2937" />
@@ -210,18 +231,18 @@ const CreateRideScreen = () => {
         )}
 
         {/* Seats */}
-        {/* <Text style={styles.label}>Available Seats</Text> */}
-        <TextInput
+          <TextInput
           style={styles.input}
           placeholder="Enter number of seats"
           placeholderTextColor="#1F2937"
           keyboardType="numeric"
           value={availableSeats}
-          onChangeText={setAvailableSeats}
+          // onChangeText={setAvailableSeats}
+          onChangeText={(text) => setAvailableSeats(text.replace(/[^0-9]/g, ''))} 
         />
 
         {/* Submit Button */}
-        <TouchableOpacity style={styles.ctaButton} onPress={onCreateRide}>
+        <TouchableOpacity style={[styles.ctaButton,!isFormValid && {backgroundColor:'#aaa'}]} onPress={onCreateRide}>
           <Text style={styles.ctaText}>Create Ride</Text>
           <Ionicons name="arrow-forward" size={18} color="#fff" style={styles.ctaIcon} />
         </TouchableOpacity>

@@ -6,16 +6,12 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  Modal,
-  TextInput,
-  Image
+  
 } from 'react-native';
-import tw from 'twrnc';
+
 import api from '../src/api/axios';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { parseJwt } from '../utils/jwt';
+
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PreviousRideItem from '../components/PreviousRideItem';
@@ -27,15 +23,11 @@ const SearchRidesScreen = () => {
   const [selectedFrom, setSelectedFrom] = useState('');
   const [selectedTo, setSelectedTo] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
-  const [error, setError] = useState(null);
+  
   const [previousRides,setPreviousRides]=useState([]);
   const [previousLoadingId,setPreviousLoadingId]=useState(null);
 
-  const [showProfile, setShowProfile] = useState(false);
-  const [profileData, setProfileData] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
-
+  
   const navigation = useNavigation();
 
   const fetchFromLocations = async () => {
@@ -194,7 +186,7 @@ const SearchRidesScreen = () => {
         {/* Search Button */}
         <TouchableOpacity
           style={{
-            backgroundColor: '#1e40af',
+            backgroundColor: (!selectedFrom || !selectedTo) ? '#93c5fd' : '#1e40af',
             paddingVertical: 12,
             borderRadius: 8,
             alignItems: 'center',
@@ -202,7 +194,7 @@ const SearchRidesScreen = () => {
             marginTop:15
           }}
           onPress={searchRides}
-          disabled={searchLoading}
+          disabled={searchLoading || !selectedFrom || !selectedTo}
         >
           {searchLoading ? (
             <ActivityIndicator size="small" color="#fff" />

@@ -14,7 +14,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../src/api/axios';
 import { parseJwt } from '../utils/jwt';
 import Icon from 'react-native-vector-icons/Feather';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Feather from 'react-native-vector-icons/Feather';
 import Toast from 'react-native-toast-message';
 
@@ -109,7 +108,7 @@ const ProfileScreen = () => {
         visibilityTime: 2000,
       });
       setEditMode(false);
-      return; // ✅ stop here, don’t call backend
+      return; // stop here, don’t call backend
     }
 
     const token = await AsyncStorage.getItem('userToken');
@@ -137,6 +136,15 @@ const ProfileScreen = () => {
     license_number: user.license_number || '',
     vehicle_number: user.vehicle_number || ''
   })
+
+  const getInitials = (name) => {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .toUpperCase();
+};
 
   const handleConfirmPasswordChange = (value) => {
     setConfirmPassword(value);
@@ -204,7 +212,14 @@ const ProfileScreen = () => {
       >
         {/* Header */}
         <View style={styles.headerRow}>
-          <Text style={styles.heading}>Profile</Text>
+          {/* <Text style={styles.heading}>Profile</Text> */}
+          {/* Avatar with initials */}
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>{getInitials(profileData.name)}</Text>
+            </View>
+            <Text style={styles.avatarName}>{profileData.name}</Text>
+          </View>
           <TouchableOpacity onPress={() => (editMode ? updateProfile() : setEditMode(true))}>
             <Icon name={editMode ? 'check' : 'edit'} size={20} color="#2563eb" />
           </TouchableOpacity>
@@ -212,7 +227,8 @@ const ProfileScreen = () => {
 
         {/* Profile Section */}
       <View style={styles.section}>
-        {['name', 'email', 'phone'].map((field) => (
+        
+        {['name', 'phone'].map((field) => (
           <View key={field} style={styles.inputGroup}>
             <Text style={styles.label}>{field.charAt(0).toUpperCase() + field.slice(1)}</Text>
             <TextInput
@@ -227,26 +243,62 @@ const ProfileScreen = () => {
           </View>
         ))}
 
+        {/* Email - always read-only */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={[styles.input, styles.disabledInput]}
+            value={profileData.email}
+            editable={false}
+          />
+        </View>
+
+
         {/* Gender Field */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Gender</Text>
           {editMode ? (
-            <DropDownPicker
-              open={openGender}
-              value={profileData.gender}
-              items={genderItems}
-              setOpen={setOpenGender}
-              setValue={(callback) =>
-                setProfileData((prev) => ({
-                  ...prev,
-                  gender: callback(prev.gender),
-                }))
-              }
-              setItems={setGenderItems}
-              placeholder="Select gender"
-              style={styles.input}
-              dropDownContainerStyle={{ borderColor: '#cbd5e1' }}
-            />
+            <>
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => setOpenGender(true)}
+              >
+                <Text style={{ color: profileData.gender ? "#0f172a" : "#9ca3af" }}>
+                  {profileData.gender || "Select gender"}
+                </Text>
+              </TouchableOpacity>
+
+              <Modal
+                visible={openGender}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setOpenGender(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.genderModalCard}>
+                    {genderItems.map((item) => (
+                      <TouchableOpacity
+                        key={item.value}
+                        style={styles.genderOption}
+                        onPress={() => {
+                          setProfileData((prev) => ({ ...prev, gender: item.value }));
+                          setOpenGender(false);
+                        }}
+                      >
+                        <Text style={styles.genderOptionText}>{item.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+
+                    <TouchableOpacity
+                      style={styles.genderCancelButton }
+                      onPress={() => setOpenGender(false)}
+                    >
+                      <Text style={styles.genderCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            </>
           ) : (
             <TextInput
               style={[styles.input, styles.disabledInput]}
@@ -255,6 +307,7 @@ const ProfileScreen = () => {
             />
           )}
         </View>
+
 
         {/* Driver-only fields */}
         {profileData.role === 'driver' && (
@@ -489,4 +542,57 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     marginHorizontal: 5 
   },
+  genderModalCard: {
+  width: "80%",
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  padding: 20,
+  elevation: 5,
+  },
+  genderOption: {
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  genderOptionText: {
+    fontSize: 16,
+    color: "#0f172a",
+    textAlign: "center"
+  },
+  genderCancelButton: {
+  padding: 10,
+  borderRadius: 8,
+  backgroundColor: "#ccc",
+  alignItems: "center",
+  marginTop: 10,
+},
+genderCancelText: {
+  color: "#1e40af",
+  fontSize: 16,
+  fontWeight: "600"
+},
+avatarContainer: {
+  flexDirection: 'row',
+  alignItems: 'center', // vertical center of circle + name
+},
+avatarCircle: {
+  width: 50,
+  height: 50,
+  borderRadius: 30, // half of width/height
+  backgroundColor: "#5A67D8",
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: 12
+},
+avatarText: {
+  color: "#fff",
+  fontSize: 20,
+  fontWeight: "bold",
+},
+avatarName: {
+  fontSize: 18,
+  fontWeight: "600",
+  color: "#0f172a",
+},
+
 });

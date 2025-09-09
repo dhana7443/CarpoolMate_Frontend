@@ -317,6 +317,7 @@ const onUpdateRide = async () => {
 
       <Toast />
     </ScrollView>
+    
   );
 };
 

@@ -7,7 +7,7 @@ import BookingRequestItem from '../components/BookingRequestItem';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
-import tw from 'twrnc';
+
 
 const BookingRequestsScreen = () => {
   const [requests, setRequests] = useState([]);
@@ -147,7 +147,6 @@ const BookingRequestsScreen = () => {
         
       </View>
       </View>
-      
       
     </View>
     

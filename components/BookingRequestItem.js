@@ -34,6 +34,11 @@ const BookingRequestItem = ({ request, onPress, onCancel, onComplete,onChat }) =
 
       <View style={{ flex: 1, marginTop: 15 }}>
         <View style={styles.row}>
+          <Text style={styles.label}>Driver: </Text>
+          <Text style={styles.value}>{request.ride.driver_name}</Text>
+        </View>
+
+        <View style={styles.row}>
           <Text style={styles.label}>From: </Text>
           <Text style={styles.value}>{request.from}</Text>
         </View>

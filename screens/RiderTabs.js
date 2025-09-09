@@ -32,7 +32,7 @@ const RiderTabs = () => {
           let iconName;
           if (route.name === 'Home') iconName = 'search-outline';
           else if (route.name === 'Bookings') iconName = 'calendar-outline';
-          else if (route.name === 'Dummy') iconName = 'ellipse-outline';
+          // else if (route.name === 'Dummy') iconName = 'ellipse-outline';
           else if (route.name === 'Profile') iconName = 'person-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },

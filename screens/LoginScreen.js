@@ -31,7 +31,9 @@ const LoginScreen = () => {
     try {
       const fcmToken = await messaging().getToken();
       const authToken = await AsyncStorage.getItem('userToken');
-
+      console.log("Auth token:", authToken);
+      console.log("FCM token:", fcmToken);
+      
       if (!authToken) {
         console.log("User not logged in, skipping FCM upload.");
         return;
@@ -102,8 +104,10 @@ const LoginScreen = () => {
 
       if (user.role === 'driver') {
         navigation.navigate('DriverDashboard');
-      } else {
+      }  else if (user.role === 'rider') {
         navigation.navigate('RiderDashboard');
+      } else  {
+        navigation.navigate('analytics');
       }
     } catch (error) {
       const message =
@@ -127,6 +131,9 @@ const LoginScreen = () => {
   const validatePassword = (value) => {
     if (!value) {
       return 'Password is required';
+    }
+    else if (value.length < 6) {
+      return 'Password must be at least 6 characters';
     }
     return '';
   };

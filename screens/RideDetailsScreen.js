@@ -8,6 +8,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
 import tw from 'twrnc';
 import Header from '../components/headerItem';
+import { parseJwt } from '../utils/jwt';
+
 
 const RideDetailsScreen = () => {
   const [rideDetails, setRideDetails] = useState(null);
@@ -15,25 +17,39 @@ const RideDetailsScreen = () => {
   const [showSubroutes, setShowSubroutes] = useState(false);
   const navigation=useNavigation();
 
+  
+  const getUserRideId = async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return null;
+
+    const decoded = parseJwt(token);
+    const userId = decoded?.user_id;
+    if (!userId) return null;
+
+    const ride_id = await AsyncStorage.getItem(`ride_id_${userId}`);
+    return { ride_id, token, userId };
+  };
+  
+
+  useFocusEffect(
+    useCallback(()=>{
+      fetchRideDetails();
+    },[])
+  );
+
   const fetchRideDetails = async () => {
     try {
-      const ride_id = await AsyncStorage.getItem('ride_id');
-      console.log(ride_id);
-      const token = await AsyncStorage.getItem('userToken');
-      console.log(token);
-      if (!ride_id || !token) {
-        console.log('No active ride or missing token, skipping fetch.');
+      const data = await getUserRideId();
+      if (!data?.ride_id || !data?.token) {
         setRideDetails(null);
         setLoading(false);
         return;
       }
 
-      const response = await api.get(`/rides/ride/${ride_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await api.get(`/rides/ride/${data.ride_id}`, {
+        headers: { Authorization: `Bearer ${data.token}` },
       });
-      console.log(response.data);
+
       setRideDetails(response.data);
     } catch (err) {
       console.error('Error fetching ride details:', err.message);
@@ -42,15 +58,10 @@ const RideDetailsScreen = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(()=>{
-      fetchRideDetails();
-    },[])
-  );
+ 
 
-
-  const handleStartRide=async()=>{
-      Alert.alert(
+  const handleStartRide = async () => {
+    Alert.alert(
       'Confirm Start',
       'Are you sure you want to start this ride?',
       [
@@ -59,26 +70,26 @@ const RideDetailsScreen = () => {
           text: 'Yes',
           onPress: async () => {
             try {
-              const rideId = await AsyncStorage.getItem('ride_id');
-              const token = await AsyncStorage.getItem('userToken');
+              const data = await getUserRideId();
+              if (!data?.ride_id || !data?.token) return;
 
-              await api.post(`/rides/${rideId}/start`, {}, {
-                headers: { Authorization: `Bearer ${token}` },
+              await api.post(`/rides/${data.ride_id}/start`, {}, {
+                headers: { Authorization: `Bearer ${data.token}` },
               });
 
               Toast.show({ type: 'success', text1: 'Ride started successfully' });
-              fetchRideDetails(); // refresh status
+              fetchRideDetails();
             } catch (error) {
               console.error('Start Ride Error:', error.message);
               Toast.show({ type: 'error', text1: 'Failed to start ride' });
             }
-          }
-        }
+          },
+        },
       ]
     );
-  }
+  };
 
-
+ 
   const handleCancelRide = async () => {
     Alert.alert(
       'Confirm Cancellation',
@@ -89,35 +100,29 @@ const RideDetailsScreen = () => {
           text: 'Yes',
           onPress: async () => {
             try {
-              const ride_id = await AsyncStorage.getItem('ride_id');
-              const token = await AsyncStorage.getItem('userToken');
-              console.log(ride_id);
-              console.log(token);
-              await api.put(`/rides/cancel/${ride_id}`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+              const data = await getUserRideId();
+              if (!data?.ride_id || !data?.token) return;
+
+              await api.put(`/rides/cancel/${data.ride_id}`, {}, {
+                headers: { Authorization: `Bearer ${data.token}` },
               });
 
-              await AsyncStorage.removeItem('ride_id');
-              Toast.show({
-                type: 'success',
-                text1: 'Ride cancelled successfully',
-              });
+              // remove ride id for this user only
+              await AsyncStorage.removeItem(`ride_id_${data.userId}`);
 
+              Toast.show({ type: 'success', text1: 'Ride cancelled successfully' });
               setRideDetails(null);
             } catch (error) {
               console.error('Cancel Ride Error:', error.message);
-              Toast.show({
-                type: 'error',
-                text1: 'Failed to cancel ride',
-              });
+              Toast.show({ type: 'error', text1: 'Failed to cancel ride' });
             }
           },
         },
       ]
     );
   };
+
+
 
   const handleCompleteRide = async () => {
   Alert.alert(
@@ -129,36 +134,25 @@ const RideDetailsScreen = () => {
         text: 'Yes',
         onPress: async () => {
           try {
-            const ride_id = await AsyncStorage.getItem('ride_id');
-            const token = await AsyncStorage.getItem('userToken');
-            console.log('token:',token);
-            console.log('ride_id',ride_id);
-            await api.put(`/rides/complete/${ride_id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+            const data = await getUserRideId();
+            if (!data?.ride_id || !data?.token) return;
+
+            await api.put(`/rides/complete/${data.ride_id}`, {}, {
+              headers: { Authorization: `Bearer ${data.token}` },
             });
 
-            Toast.show({
-              type: 'success',
-              text1: 'Ride marked as complete',
-            });
-
-            setRideDetails(null); // or refresh list
-            await AsyncStorage.removeItem('ride_id');
+            await AsyncStorage.removeItem(`ride_id_${data.userId}`);
+            Toast.show({ type: 'success', text1: 'Ride marked as complete' });
+            setRideDetails(null);
           } catch (error) {
             console.error('Complete Ride Error:', error.message);
-            Toast.show({
-              type: 'error',
-              text1: 'Failed to complete ride',
-            });
+            Toast.show({ type: 'error', text1: 'Failed to complete ride' });
           }
         },
       },
     ]
   );
 };
-
 
   if (loading) {
     return (
@@ -170,11 +164,14 @@ const RideDetailsScreen = () => {
 
   if (!rideDetails) {
     return (
-      <View style={tw`flex-1 justify-start items-center bg-gray-100 p-10`}>
-        <Text style={tw`text-base text-gray-600 text-center px-6`}>
-          No active rides or failed to load details.
-        </Text>
-      </View>
+      <SafeAreaView style={tw`flex-1 bg-gray-100`}>
+        <Header/>
+        <View style={tw`flex-1 justify-start items-center bg-gray-100 p-10`}>
+          <Text style={tw`text-base text-gray-600 text-center px-6`}>
+            No active rides or failed to load details.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -184,7 +181,7 @@ const RideDetailsScreen = () => {
     <ScrollView style={tw`px-4 pt-6`}>
       {/* <Text style={tw`text-xl font-bold text-black mb-4 mt-10`}>Ride Details</Text> */}
       <View style={tw`flex-row justify-between items-center mb-4 mt-10`}>
-        <Text style={tw`text-l font-bold text-black`}>Ride Details</Text>
+        <Text style={tw`text-xl font-bold text-black`}>Ride Details</Text>
         {rideDetails.status === 'Scheduled' && (
           <TouchableOpacity onPress={() => navigation.navigate('EditRide', { ride: rideDetails })}>
             <Ionicons name="create-outline" size={22} color="#2563eb" />
@@ -227,24 +224,6 @@ const RideDetailsScreen = () => {
           </Text>
         </Text>
 
-        
-        {/* <View style={tw`flex-row justify-between mt-2`}>
-          <TouchableOpacity
-            style={tw`bg-red-600 py-2 px-4 rounded-xl flex-1 mr-2`}
-            onPress={handleCancelRide}
-          >
-            <Text style={tw`text-white text-center font-semibold`}>Cancel Ride</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={tw`bg-green-600 py-2 px-4 rounded-xl flex-1 ml-2`}
-            onPress={handleCompleteRide}
-          >
-            <Text style={tw`text-white text-center font-semibold`}>Complete</Text>
-          </TouchableOpacity>
-        </View> */}
-
-        {/* conditional buttons */}
         <View style={tw`flex-row justify-between mt-2`}>
           {rideDetails.status === 'Scheduled' && (
             <>

@@ -9,7 +9,7 @@ import { useCallback } from 'react';
 import { useUnread } from './unreadContext';
 import Header from '../components/headerItem';
 import { useNavigation } from '@react-navigation/native';
-
+import { parseJwt } from '../utils/jwt';
 
 const RideRequestsScreen = () => {
   const [rideRequests, setRideRequests] = useState(null);
@@ -22,23 +22,45 @@ const RideRequestsScreen = () => {
     }, [])
   );
 
+  
   const fetchRideRequests = async () => {
     try {
-      const ride_id = await AsyncStorage.getItem("ride_id");
-      if (!ride_id){
-        // If no active ride, clear the requests state
-      setRideRequests([]);
-      return; //prevents api call
-      }
+      // get ride_id and token for the current user
       const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        setRideRequests([]);
+        return;
+      }
+
+      const decoded = parseJwt(token);
+      const userId = decoded?.user_id;
+      if (!userId) {
+        setRideRequests([]);
+        return;
+      }
+
+      const ride_id = await AsyncStorage.getItem(`ride_id_${userId}`);
+      if (!ride_id) {
+        setRideRequests([]);
+        return;
+      }
+
+      // fetch ride requests for this ride
       const res = await api.get(`/ride-requests/ride/${ride_id}/requests`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setRideRequests(res.data);
       console.log(res.data);
-      //mark all ride requests as seen
 
-      await api.put(`ride-requests/ride/${ride_id}/mark-seen`,{
+      // mark all ride requests as seen
+      // await api.put(
+      //   `/ride-requests/ride/${ride_id}/mark-seen`,
+      //   {},
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
+
+      await api.put(`/ride-requests/ride/${ride_id}/mark-seen`,{
         headers:{Authorization:`Bearer ${token}`}
       })
 
@@ -186,8 +208,9 @@ const RideRequestsScreen = () => {
           ))}
         </View>
       )}
-      <Toast/>
+      
     </ScrollView>
+    <Toast/>
     </View>
     
   );
